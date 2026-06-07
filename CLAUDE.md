@@ -26,7 +26,15 @@ projects/
 
 ## Criar novo projeto a partir deste base
 
-**Backend:** copie a estrutura de `temperature-api/` e renomeie os namespaces. Para JWT, siga a seção correspondente em `guidelines/csharp-api.md`.
+**Backend:** copie `temperature-api/` para um novo diretório e rode o script de bootstrap:
+
+```bash
+cp -r projects/temperature-api projects/meu-projeto-api
+cd projects/meu-projeto-api
+bash rename.sh MeuProjeto          # ex: OrdersApi, ProductCatalog
+```
+
+O script substitui namespaces, nome do banco e volume Docker em todos os arquivos e renomeia pastas e `.sln` automaticamente. A entidade de exemplo (`TemperatureReading`) é mantida como referência — adicione suas entidades seguindo o mesmo padrão e remova-a quando não precisar mais. Para JWT, siga a seção correspondente em `guidelines/csharp-api.md`.
 
 **Frontend:** copie `temperature-web/` e ajuste `package.json`. Certifique-se de que `"type":"module"` e `"types":["vite/client"]` estão presentes — ambos são obrigatórios.
 
