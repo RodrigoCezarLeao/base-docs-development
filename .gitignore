@@ -1,0 +1,128 @@
+# ─────────────────────────────────────────────
+#  Secrets & environment variables
+# ─────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+**/secrets/
+
+# ─────────────────────────────────────────────
+#  Node / Frontend
+# ─────────────────────────────────────────────
+node_modules/
+dist/
+dist-ssr/
+build/
+.cache/
+.parcel-cache/
+.turbo/
+
+# Vite
+*.local
+vite.config.*.timestamp-*
+
+# Coverage
+coverage/
+lcov.info
+*.lcov
+
+# Testing
+test-results/
+playwright-report/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Package manager locks are intentionally committed — do NOT ignore them
+
+# ─────────────────────────────────────────────
+#  .NET / C# Backend
+# ─────────────────────────────────────────────
+
+# Build output
+**/bin/
+**/obj/
+**/out/
+
+# NuGet
+**/.nuget/
+**/packages/
+*.nupkg
+*.snupkg
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio test runner
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Rider / ReSharper
+.idea/
+_ReSharperCache/
+*.DotSettings.user
+
+# MSBuild binary and source logs
+*.binlog
+*.svclog
+
+# ASP.NET runtime secrets
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.*.local.json
+
+# Entity Framework / database migrations (local)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# ─────────────────────────────────────────────
+#  Visual Studio
+# ─────────────────────────────────────────────
+.vs/
+*.vcxproj.filters
+*.VC.db
+*.VC.opendb
+ipch/
+
+# ─────────────────────────────────────────────
+#  VS Code
+# ─────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ─────────────────────────────────────────────
+#  Docker
+# ─────────────────────────────────────────────
+# Named volumes and override files are runtime — never commit real credentials
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ─────────────────────────────────────────────
+#  OS / misc
+# ─────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
