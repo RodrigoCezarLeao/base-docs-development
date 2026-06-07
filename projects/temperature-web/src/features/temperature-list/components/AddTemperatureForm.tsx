@@ -8,6 +8,8 @@ interface AddTemperatureFormProps {
   isLoading: boolean
 }
 
+const inputClass = 'px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+
 export function AddTemperatureForm({ onSubmit, isLoading }: AddTemperatureFormProps) {
   const { t } = useTranslation()
   const [location, setLocation] = useState('')
@@ -16,20 +18,19 @@ export function AddTemperatureForm({ onSubmit, isLoading }: AddTemperatureFormPr
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!location || !valueCelsius) return
-
     onSubmit({ location, valueCelsius: parseFloat(valueCelsius), recordedAt: new Date().toISOString() })
     setLocation('')
     setValueCelsius('')
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
+    <form onSubmit={handleSubmit} className="flex flex-wrap gap-2 mb-6">
       <input
         placeholder={t('temperature.location')}
         value={location}
         onChange={(e) => setLocation(e.target.value)}
         required
-        style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+        className={inputClass}
       />
       <input
         type="number"
@@ -38,7 +39,7 @@ export function AddTemperatureForm({ onSubmit, isLoading }: AddTemperatureFormPr
         value={valueCelsius}
         onChange={(e) => setValueCelsius(e.target.value)}
         required
-        style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', width: '140px' }}
+        className={`${inputClass} w-36`}
       />
       <Button type="submit" loading={isLoading}>
         {t('common.add')}

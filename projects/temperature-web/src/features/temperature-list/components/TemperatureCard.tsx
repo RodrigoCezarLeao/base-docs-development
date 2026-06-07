@@ -10,16 +10,16 @@ export function TemperatureCard({ reading }: TemperatureCardProps) {
   const { t } = useTranslation()
 
   return (
-    <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px', backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <span style={{ fontWeight: 600, color: '#374151' }}>{reading.location}</span>
-        <span style={{ fontSize: '24px', fontWeight: 700, color: '#2563eb' }}>
+    <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+      <div className="flex justify-between items-start">
+        <span className="font-semibold text-gray-700">{reading.location}</span>
+        <span className="text-2xl font-bold text-blue-600">
           {formatCelsius(reading.valueCelsius)}
         </span>
       </div>
-      <div style={{ marginTop: '8px', fontSize: '13px', color: '#9ca3af' }}>
+      <p className="mt-2 text-xs text-gray-400">
         {t('temperature.recordedAt')}: {formatDateTime(reading.recordedAt)}
-      </div>
+      </p>
     </div>
   )
 }

@@ -1,18 +1,17 @@
 interface SpinnerProps {
-  size?: number
+  size?: 'sm' | 'md' | 'lg'
 }
 
-export function Spinner({ size = 24 }: SpinnerProps) {
+const sizeClasses = {
+  sm: 'w-4 h-4 border-2',
+  md: 'w-6 h-6 border-[3px]',
+  lg: 'w-10 h-10 border-4',
+}
+
+export function Spinner({ size = 'md' }: SpinnerProps) {
   return (
     <div
-      style={{
-        width: size,
-        height: size,
-        border: '3px solid #e5e7eb',
-        borderTop: '3px solid #2563eb',
-        borderRadius: '50%',
-        animation: 'spin 0.8s linear infinite',
-      }}
+      className={`${sizeClasses[size]} rounded-full border-gray-200 border-t-blue-600 animate-spin`}
     />
   )
 }

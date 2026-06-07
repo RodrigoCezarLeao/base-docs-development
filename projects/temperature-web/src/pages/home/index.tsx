@@ -12,7 +12,7 @@ export function HomePage() {
   } = useTemperatureList()
 
   return (
-    <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 16px' }}>
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <PageHeader title={t('temperature.title')} />
       <AddTemperatureForm onSubmit={handleCreate} isLoading={isCreating} />
       <TemperatureFilters

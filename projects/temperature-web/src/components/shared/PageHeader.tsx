@@ -5,8 +5,8 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, children }: PageHeaderProps) {
   return (
-    <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-      <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', margin: 0 }}>{title}</h1>
+    <header className="flex justify-between items-center mb-6">
+      <h1 className="text-2xl font-bold text-gray-900 m-0">{title}</h1>
       {children && <div>{children}</div>}
     </header>
   )

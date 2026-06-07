@@ -11,13 +11,13 @@ export function TemperatureFilters({ locationFilter, onLocationChange, onClear }
   const { t } = useTranslation()
 
   return (
-    <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+    <div className="flex gap-2 mb-4">
       <input
         type="text"
         placeholder={t('temperature.filterByLocation')}
         value={locationFilter}
         onChange={(e) => onLocationChange(e.target.value)}
-        style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', flex: 1 }}
+        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       {locationFilter && (
         <Button variant="secondary" onClick={onClear}>

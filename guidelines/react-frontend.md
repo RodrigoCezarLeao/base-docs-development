@@ -1,4 +1,4 @@
-# Guideline — Frontend React com TypeScript, Vite, React Query, Zustand e i18n
+# Guideline — Frontend React com TypeScript, Vite, React Query, Zustand, Tailwind e i18n
 
 ## Propósito
 
@@ -16,6 +16,8 @@ Este documento define o padrão de organização e desenvolvimento para frontend
 | TanStack Query (React Query) | 5 | Estado servidor (fetch, cache, mutations) |
 | Zustand | 4 | Estado cliente (UI state, sessão, preferências) |
 | i18next + react-i18next | 23 | Internacionalização |
+| Tailwind CSS | 4 | Estilização utility-first |
+| ESLint | 9 | Linter (flat config) |
 | Vitest + Testing Library | latest | Testes unitários |
 
 ---
@@ -42,7 +44,8 @@ src/
 │   │       └── translation.json
 │   └── index.ts               → configuração do i18next
 ├── lib/
-│   └── queryClient.ts         → instância e configuração global do QueryClient
+│   ├── queryClient.ts         → instância e configuração global do QueryClient
+│   └── cn.ts                  → helper para merge de classes Tailwind (clsx + tailwind-merge)
 ├── services/
 │   └── {dominio}/
 │       ├── types.ts           → tipos de request/response da API
@@ -581,6 +584,157 @@ describe('truncate', () => {
 
 ---
 
+## Tailwind CSS
+
+### Setup (v4)
+
+Tailwind v4 não precisa de arquivo de configuração — funciona via plugin do Vite e uma única diretiva no CSS.
+
+```ts
+// vite.config.ts
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+})
+```
+
+```css
+/* src/styles/global.css */
+@import "tailwindcss";
+```
+
+### Helper `cn`
+
+Use sempre `cn()` para classes condicionais. Ele combina `clsx` (lógica condicional) com `tailwind-merge` (resolve conflitos de classes Tailwind).
+
+```ts
+// src/lib/cn.ts
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+```
+
+```tsx
+// Uso em componentes
+import { cn } from '@/lib/cn'
+
+<button className={cn('px-4 py-2 rounded-md', isActive && 'bg-blue-600 text-white')} />
+```
+
+### Convenções
+
+```
+✅ Usar classes Tailwind para todo estilo
+✅ Usar cn() para classes condicionais ou que se combinam com props
+✅ Extrair combinações longas para variáveis antes do JSX
+
+❌ Nunca usar style={{ }} inline — exceto para valores genuinamente dinâmicos (ex: width em porcentagem calculada em runtime)
+❌ Nunca misturar Tailwind com CSS externo para o mesmo elemento
+❌ Nunca duplicar classes que conflitem (ex: `text-sm text-lg`) — use cn() que resolve o conflito
+```
+
+```tsx
+// ❌ Style inline desnecessário
+<div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+
+// ✅ Tailwind
+<div className="flex gap-2 mb-4">
+
+// ✅ Condicional com cn()
+<div className={cn('flex gap-2', isOpen ? 'mb-4' : 'mb-0')}>
+
+// ✅ Valor genuinamente dinâmico (calculado em JS)
+<div className="relative" style={{ width: `${progress}%` }}>
+```
+
+### Variantes de componentes com `cn`
+
+```tsx
+interface BadgeProps {
+  variant?: 'default' | 'success' | 'danger'
+  children: React.ReactNode
+}
+
+const variantClasses = {
+  default: 'bg-gray-100 text-gray-700',
+  success: 'bg-green-100 text-green-700',
+  danger:  'bg-red-100 text-red-700',
+}
+
+export function Badge({ variant = 'default', children }: BadgeProps) {
+  return (
+    <span className={cn('px-2 py-0.5 rounded text-xs font-medium', variantClasses[variant])}>
+      {children}
+    </span>
+  )
+}
+```
+
+---
+
+## ESLint
+
+### Configuração (flat config, v9)
+
+```js
+// eslint.config.js
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+
+export default tseslint.config(
+  { ignores: ['dist', 'node_modules'] },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'error',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+    },
+  },
+)
+```
+
+### Scripts
+
+```json
+{
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  }
+}
+```
+
+### Regras importantes
+
+| Regra | Por quê |
+|---|---|
+| `no-explicit-any` como erro | Força tipagem correta — use `unknown` e narrowing |
+| `no-unused-vars` como erro | Mantém o código limpo; prefixe com `_` o que é intencional |
+| `react-hooks/rules-of-hooks` | Garante hooks chamados na ordem certa |
+| `react-hooks/exhaustive-deps` | Evita bugs silenciosos em `useEffect` com deps faltando |
+| `no-console` como warning | Logs de debug não devem ir para produção |
+
+---
+
 ## TypeScript — Convenções
 
 ```typescript
@@ -612,6 +766,8 @@ export function UserCard({ user, onSelect, compact = false }: UserCardProps) {
 - [ ] Mutations em `services/{feature}/actions.ts`
 - [ ] Se precisar de estado global: store em `stores/{feature}/` com os 4 arquivos
 - [ ] Componentes com no máximo 100 linhas — separar lógica em hook e JSX em subcomponentes
+- [ ] Estilo via classes Tailwind — sem `style={{}}` inline exceto valores dinâmicos calculados em JS
+- [ ] Classes condicionais usando `cn()` de `@/lib/cn`
 - [ ] Textos visíveis ao usuário usando `t()` do i18n
 - [ ] Funções utilitárias novas em `helpers/` com teste unitário
 - [ ] Exports públicos da feature via `index.ts`
@@ -623,3 +779,5 @@ export function UserCard({ user, onSelect, compact = false }: UserCardProps) {
 - [ ] Props tipadas com `interface` no mesmo arquivo
 - [ ] Sem chamada direta a store ou API se for `ui/`
 - [ ] Sem lógica inline no JSX — pré-computar antes do `return`
+- [ ] Variantes de aparência via `cn()` e objeto de classes, não `style={{}}`
+- [ ] `npm run lint` passa sem erros antes de commitar
