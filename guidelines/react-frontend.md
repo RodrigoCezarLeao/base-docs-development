@@ -584,6 +584,358 @@ describe('truncate', () => {
 
 ---
 
+## Testes
+
+### Stack
+
+| Pacote | Papel |
+|---|---|
+| `vitest` | Test runner, assertions, mocks (`vi`) |
+| `@testing-library/react` | Renderização e queries de componentes |
+| `@testing-library/user-event` | Simulação de interações reais do usuário |
+| `@testing-library/jest-dom` | Matchers extras (`toBeInTheDocument`, `toBeDisabled`, …) |
+| `jsdom` | Ambiente DOM virtual |
+| `@vitest/coverage-v8` | Relatório de cobertura |
+
+### Configuração
+
+```ts
+// vite.config.ts
+export default defineConfig({
+  // ...
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      exclude: ['src/test/**', 'src/main.tsx', '**/*.d.ts'],
+    },
+  },
+})
+```
+
+```ts
+// src/test/setup.ts
+import '@testing-library/jest-dom'
+```
+
+### Test utils
+
+Crie um utilitário de render que encapsula os providers obrigatórios (QueryClientProvider, etc.):
+
+```tsx
+// src/test/utils.tsx
+import { render, type RenderOptions } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
+
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+      mutations: { retry: false },
+    },
+  })
+}
+
+function Providers({ children }: { children: ReactNode }) {
+  return (
+    <QueryClientProvider client={createTestQueryClient()}>
+      {children}
+    </QueryClientProvider>
+  )
+}
+
+export function renderWithProviders(ui: React.ReactElement, options?: RenderOptions) {
+  return render(ui, { wrapper: Providers, ...options })
+}
+
+export * from '@testing-library/react'
+```
+
+Importe de `@/test/utils` ao invés de `@testing-library/react` nos testes que precisam de providers.
+
+### Scripts
+
+```json
+{
+  "scripts": {
+    "test":          "vitest",
+    "test:run":      "vitest run",
+    "test:ui":       "vitest --ui",
+    "test:coverage": "vitest run --coverage"
+  }
+}
+```
+
+`test` mantém o watcher ativo (desenvolvimento). `test:run` roda uma vez — use no CI.
+
+---
+
+### O que testar
+
+| Camada | O que testar |
+|---|---|
+| `helpers/` | Toda função pura — mesmo input → mesmo output |
+| `components/ui/` | Render correto, estados (disabled, loading), variantes de aparência |
+| `components/` de feature | Comportamento visível: renderiza dados, reage a interações |
+| `services/` (API) | Chama o endpoint correto, retorna o shape esperado, propaga erros |
+| `stores/` | Selectors e actions — testar a lógica do store diretamente, sem componente |
+
+**O que NÃO testar:**
+- Implementação interna (nomes de classes CSS específicos que não têm semântica)
+- A integração completa com o servidor (isso é responsabilidade dos testes de integração do backend)
+- Detalhes de renderização que o usuário final não vê
+
+---
+
+### Testes de helpers
+
+Simples e diretos — sem providers, sem mocks.
+
+```typescript
+// helpers/format.test.ts
+import { describe, it, expect } from 'vitest'
+import { formatCelsius, celsiusToFahrenheit } from './format'
+
+describe('formatCelsius', () => {
+  it('formats with one decimal place', () => {
+    expect(formatCelsius(28.5)).toBe('28.5°C')
+  })
+  it('handles negative values', () => {
+    expect(formatCelsius(-5)).toBe('-5.0°C')
+  })
+})
+
+describe('celsiusToFahrenheit', () => {
+  it('converts 0°C to 32°F', () => {
+    expect(celsiusToFahrenheit(0)).toBe(32)
+  })
+})
+```
+
+---
+
+### Testes de componente
+
+Para componentes que usam `useTranslation`, mocke `react-i18next` para evitar depender do setup completo de i18n:
+
+```tsx
+// components/ui/Button.test.tsx
+import { render, screen } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { Button } from './Button'
+
+describe('Button', () => {
+  it('renders children', () => {
+    render(<Button>Salvar</Button>)
+    expect(screen.getByRole('button', { name: 'Salvar' })).toBeInTheDocument()
+  })
+
+  it('shows "..." when loading', () => {
+    render(<Button loading>Salvar</Button>)
+    expect(screen.getByRole('button')).toHaveTextContent('...')
+  })
+
+  it('is disabled when loading', () => {
+    render(<Button loading>Salvar</Button>)
+    expect(screen.getByRole('button')).toBeDisabled()
+  })
+})
+```
+
+```tsx
+// features/temperature-list/components/TemperatureCard.test.tsx
+import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { TemperatureCard } from './TemperatureCard'
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}))
+
+describe('TemperatureCard', () => {
+  const reading = {
+    id: 1, location: 'São Paulo', valueCelsius: 28.5,
+    recordedAt: new Date().toISOString(), isActive: true,
+    createdAt: new Date().toISOString(), updatedAt: null,
+  }
+
+  it('renders location', () => {
+    render(<TemperatureCard reading={reading} />)
+    expect(screen.getByText('São Paulo')).toBeInTheDocument()
+  })
+
+  it('renders formatted temperature', () => {
+    render(<TemperatureCard reading={reading} />)
+    expect(screen.getByText('28.5°C')).toBeInTheDocument()
+  })
+})
+```
+
+---
+
+### Testes de formulário com userEvent
+
+Use `userEvent.setup()` para simular interações reais (focus, input, click):
+
+```tsx
+// features/temperature-list/components/AddTemperatureForm.test.tsx
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { AddTemperatureForm } from './AddTemperatureForm'
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}))
+
+describe('AddTemperatureForm', () => {
+  const onSubmit = vi.fn()
+  beforeEach(() => onSubmit.mockClear())
+
+  it('does not submit when fields are empty', async () => {
+    const user = userEvent.setup()
+    render(<AddTemperatureForm onSubmit={onSubmit} isLoading={false} />)
+
+    await user.click(screen.getByRole('button'))
+
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it('calls onSubmit with correct data when form is filled', async () => {
+    const user = userEvent.setup()
+    render(<AddTemperatureForm onSubmit={onSubmit} isLoading={false} />)
+
+    await user.type(screen.getByPlaceholderText('temperature.location'), 'São Paulo')
+    await user.type(screen.getByPlaceholderText(/temperature\.value/), '28.5')
+    await user.click(screen.getByRole('button'))
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ location: 'São Paulo', valueCelsius: 28.5 }),
+    )
+  })
+
+  it('disables the button while loading', () => {
+    render(<AddTemperatureForm onSubmit={onSubmit} isLoading={true} />)
+    expect(screen.getByRole('button')).toBeDisabled()
+  })
+})
+```
+
+---
+
+### Testes de serviço (API)
+
+Use `vi.mock` para substituir o módulo `api` — teste o contrato (qual endpoint é chamado, qual shape é retornado) sem dependência de rede.
+
+```typescript
+// services/health/index.test.ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { ping, checkHealth } from './index'
+import { api } from '@/lib/api'
+
+vi.mock('@/lib/api', () => ({
+  api: { get: vi.fn() },
+}))
+
+const mockGet = vi.mocked(api.get)
+
+describe('ping', () => {
+  beforeEach(() => mockGet.mockClear())
+
+  it('calls GET /ping and returns { status: "ok" }', async () => {
+    mockGet.mockResolvedValue({ status: 'ok' })
+
+    const result = await ping()
+
+    expect(mockGet).toHaveBeenCalledWith('/ping')
+    expect(result).toEqual({ status: 'ok' })
+  })
+
+  it('propagates rejection when backend is unreachable', async () => {
+    mockGet.mockRejectedValue(new Error('Network Error'))
+
+    await expect(ping()).rejects.toThrow('Network Error')
+  })
+})
+
+describe('checkHealth', () => {
+  beforeEach(() => mockGet.mockClear())
+
+  it('returns Healthy when all checks pass', async () => {
+    mockGet.mockResolvedValue({ status: 'Healthy', checks: [] })
+
+    const result = await checkHealth()
+
+    expect(result.status).toBe('Healthy')
+  })
+
+  it('returns Unhealthy with check details when a dependency fails', async () => {
+    mockGet.mockResolvedValue({
+      status: 'Unhealthy',
+      checks: [{ name: 'postgresql', status: 'Unhealthy', description: 'Connection refused' }],
+    })
+
+    const result = await checkHealth()
+
+    expect(result.status).toBe('Unhealthy')
+    expect(result.checks[0]).toMatchObject({ name: 'postgresql', status: 'Unhealthy' })
+  })
+})
+```
+
+O módulo de serviço que esses testes exercitam:
+
+```typescript
+// services/health/index.ts
+import { api } from '@/lib/api'
+
+export interface HealthCheckResult {
+  status: string
+  checks: Array<{ name: string; status: string; description: string | null }>
+}
+
+export async function ping(): Promise<{ status: string }> {
+  return api.get('/ping')
+}
+
+export async function checkHealth(): Promise<HealthCheckResult> {
+  return api.get('/health')
+}
+```
+
+---
+
+### Estrutura de arquivos de teste
+
+Coloque os arquivos de teste **ao lado** do arquivo que testam, com sufixo `.test.ts(x)`:
+
+```
+src/
+├── components/ui/
+│   ├── Button.tsx
+│   └── Button.test.tsx
+├── features/temperature-list/components/
+│   ├── TemperatureCard.tsx
+│   ├── TemperatureCard.test.tsx
+│   ├── AddTemperatureForm.tsx
+│   └── AddTemperatureForm.test.tsx
+├── helpers/
+│   ├── format.ts
+│   └── format.test.ts
+├── services/health/
+│   ├── index.ts
+│   └── index.test.ts
+└── test/
+    ├── setup.ts      → setupFiles globais
+    └── utils.tsx     → renderWithProviders e re-exports
+```
+
+---
+
 ## Tailwind CSS
 
 ### Setup (v4)
@@ -770,6 +1122,7 @@ export function UserCard({ user, onSelect, compact = false }: UserCardProps) {
 - [ ] Classes condicionais usando `cn()` de `@/lib/cn`
 - [ ] Textos visíveis ao usuário usando `t()` do i18n
 - [ ] Funções utilitárias novas em `helpers/` com teste unitário
+- [ ] Novos serviços de API em `services/{dominio}/` com teste de contrato (`vi.mock`)
 - [ ] Exports públicos da feature via `index.ts`
 
 ## Checklist para novo componente reutilizável
@@ -781,3 +1134,4 @@ export function UserCard({ user, onSelect, compact = false }: UserCardProps) {
 - [ ] Sem lógica inline no JSX — pré-computar antes do `return`
 - [ ] Variantes de aparência via `cn()` e objeto de classes, não `style={{}}`
 - [ ] `npm run lint` passa sem erros antes de commitar
+- [ ] `npm run test:run` passa sem erros antes de commitar
