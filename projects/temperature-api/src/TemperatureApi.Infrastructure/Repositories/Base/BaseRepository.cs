@@ -1,4 +1,5 @@
 using System.Data;
+using TemperatureApi.Application.Interfaces;
 using TemperatureApi.Infrastructure.Data;
 
 namespace TemperatureApi.Infrastructure.Repositories.Base;

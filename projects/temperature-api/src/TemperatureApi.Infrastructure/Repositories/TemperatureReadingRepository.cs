@@ -2,7 +2,7 @@ using Dapper;
 using TemperatureApi.Domain.Models;
 using TemperatureApi.Infrastructure.Data;
 using TemperatureApi.Infrastructure.Repositories.Base;
-using TemperatureApi.Infrastructure.Repositories.Interfaces;
+using TemperatureApi.Application.Interfaces;
 
 namespace TemperatureApi.Infrastructure.Repositories;
 

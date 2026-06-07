@@ -3,7 +3,7 @@ using DocMap.Application.Interfaces;
 using DocMap.Application.Requests;
 using DocMap.Application.Responses;
 using DocMap.Domain.Models;
-using DocMap.Infrastructure.Repositories.Interfaces;
+using DocMap.Application.Interfaces;
 
 namespace DocMap.Application.Services;
 

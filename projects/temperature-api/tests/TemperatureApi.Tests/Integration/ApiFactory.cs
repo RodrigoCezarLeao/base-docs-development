@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using TemperatureApi.Infrastructure.Data;
 using TemperatureApi.Infrastructure.Migrations;
-using TemperatureApi.Infrastructure.Repositories.Interfaces;
+using TemperatureApi.Application.Interfaces;
 
 namespace TemperatureApi.Tests.Integration;
 

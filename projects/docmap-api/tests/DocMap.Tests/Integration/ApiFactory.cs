@@ -1,6 +1,6 @@
 using DocMap.Infrastructure.Data;
 using DocMap.Infrastructure.Migrations;
-using DocMap.Infrastructure.Repositories.Interfaces;
+using DocMap.Application.Interfaces;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;

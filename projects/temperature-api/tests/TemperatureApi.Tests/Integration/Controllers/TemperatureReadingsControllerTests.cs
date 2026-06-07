@@ -5,7 +5,7 @@ using NSubstitute;
 using NSubstitute.ReturnsExtensions;
 using TemperatureApi.Application.Requests;
 using TemperatureApi.Domain.Models;
-using TemperatureApi.Infrastructure.Repositories.Interfaces;
+using TemperatureApi.Application.Interfaces;
 using TemperatureApi.Tests.Integration;
 
 namespace TemperatureApi.Tests.Integration.Controllers;

@@ -2,7 +2,7 @@ using Dapper;
 using DocMap.Infrastructure.Data;
 using DocMap.Infrastructure.Migrations;
 using DocMap.Infrastructure.Repositories;
-using DocMap.Infrastructure.Repositories.Interfaces;
+using DocMap.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

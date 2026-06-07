@@ -1,10 +1,2 @@
-using DocMap.Domain.Models;
-using DocMap.Infrastructure.Repositories.Base;
-
+// Moved to DocMap.Application.Interfaces.IDocumentConnectionRepository
 namespace DocMap.Infrastructure.Repositories.Interfaces;
-
-public interface IDocumentConnectionRepository : IBaseRepository<DocumentConnection, int>
-{
-    Task<IEnumerable<DocumentConnection>> GetAllByProjectIdAsync(int projectId, CancellationToken cancellationToken = default);
-    Task<DocumentConnection?> GetBySourceAndTargetAsync(int sourceDocumentId, int targetDocumentId, CancellationToken cancellationToken = default);
-}

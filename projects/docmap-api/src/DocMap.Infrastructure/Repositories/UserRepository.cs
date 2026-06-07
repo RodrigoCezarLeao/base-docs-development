@@ -2,7 +2,7 @@ using Dapper;
 using DocMap.Domain.Models;
 using DocMap.Infrastructure.Data;
 using DocMap.Infrastructure.Repositories.Base;
-using DocMap.Infrastructure.Repositories.Interfaces;
+using DocMap.Application.Interfaces;
 
 namespace DocMap.Infrastructure.Repositories;
 

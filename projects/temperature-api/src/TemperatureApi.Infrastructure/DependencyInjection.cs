@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TemperatureApi.Infrastructure.Data;
 using TemperatureApi.Infrastructure.Migrations;
 using TemperatureApi.Infrastructure.Repositories;
-using TemperatureApi.Infrastructure.Repositories.Interfaces;
+using TemperatureApi.Application.Interfaces;
 
 namespace TemperatureApi.Infrastructure;
 

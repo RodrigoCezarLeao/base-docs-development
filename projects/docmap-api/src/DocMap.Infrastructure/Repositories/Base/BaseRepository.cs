@@ -1,4 +1,5 @@
 using System.Data;
+using DocMap.Application.Interfaces;
 using DocMap.Infrastructure.Data;
 
 namespace DocMap.Infrastructure.Repositories.Base;

@@ -4,7 +4,7 @@ using NSubstitute.ReturnsExtensions;
 using TemperatureApi.Application.Requests;
 using TemperatureApi.Application.Services;
 using TemperatureApi.Domain.Models;
-using TemperatureApi.Infrastructure.Repositories.Interfaces;
+using TemperatureApi.Application.Interfaces;
 
 namespace TemperatureApi.Tests.Unit.Services;
 
