@@ -561,6 +561,116 @@ Quando uma dependência falha, `/health` retorna `503 Service Unavailable` com `
 
 ---
 
+## Autenticação JWT (opcional)
+
+Quando a API precisa de autenticação, use **JWT Bearer com HS256**. Adicione ao `Api.csproj`:
+
+```xml
+<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
+```
+
+`appsettings.json`:
+```json
+{
+  "Jwt": { "Secret": "seu-secret-min-32-chars-troque-em-producao!" }
+}
+```
+
+`Program.cs` — registre o middleware de autenticação e Swagger com suporte a Bearer:
+
+```csharp
+// Registro
+var jwtSecret = builder.Configuration["Jwt:Secret"]
+    ?? throw new InvalidOperationException("JWT secret not configured.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Swagger com Bearer
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization", Type = SecuritySchemeType.Http,
+        Scheme = "Bearer", BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme { Reference = new OpenApiReference
+                { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// Middleware (ordem importa — Authentication antes de Authorization)
+app.UseAuthentication();
+app.UseAuthorization();
+```
+
+**Geração do token** no `AuthService`:
+
+```csharp
+public string GenerateToken(User user)
+{
+    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSecret));
+    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+    var token = new JwtSecurityToken(
+        claims: [
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+        ],
+        expires: DateTime.UtcNow.AddDays(7),
+        signingCredentials: creds
+    );
+
+    return new JwtSecurityTokenHandler().WriteToken(token);
+}
+```
+
+**Nos controllers** — proteja com `[Authorize]` e leia o ID do usuário via `ClaimTypes.NameIdentifier`:
+
+```csharp
+[Authorize]
+[HttpGet]
+public async Task<IActionResult> GetAll()
+{
+    var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    var response = await _service.GetAllAsync(userId);
+    return Ok(response);
+}
+```
+
+**Senhas** — nunca armazene texto plano. Use BCrypt:
+
+```xml
+<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+```
+
+```csharp
+// Hash ao criar usuário
+string hash = BCrypt.Net.BCrypt.HashPassword(plainPassword);
+
+// Verificação no login
+bool isValid = BCrypt.Net.BCrypt.Verify(plainPassword, storedHash);
+```
+
+---
+
 ## Injeção de Dependência
 
 Cada camada expõe um extension method de registro. O `Program.cs` chama apenas esses dois métodos.
@@ -1051,7 +1161,14 @@ dotnet test -v normal              # output detalhado
 - [ ] `tests/.../Integration/HealthCheckTests.cs` — `/ping` e `/health`
 
 **Infraestrutura local**
-- [ ] `docker-compose.yml` com serviço PostgreSQL
+- [ ] `docker-compose.yml` com serviço PostgreSQL (use porta diferente de 5432 se houver outro projeto rodando)
 - [ ] `AddHealthChecks()` em `Program.cs` + endpoints `/ping` e `/health`
 - [ ] Swagger configurado com título e descrição (`SwaggerDoc("v1", ...)`)
 - [ ] `public partial class Program { }` no final de `Program.cs`
+
+**Se a API tiver autenticação**
+- [ ] `JwtBearer` configurado com `TokenValidationParameters` (HS256, sem validação de issuer/audience para APIs internas)
+- [ ] Swagger com `AddSecurityDefinition("Bearer", ...)` + `AddSecurityRequirement`
+- [ ] Senhas armazenadas com BCrypt (nunca texto plano)
+- [ ] Token com `ClaimTypes.NameIdentifier` para ID do usuário
+- [ ] `UseAuthentication()` antes de `UseAuthorization()` no pipeline

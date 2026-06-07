@@ -18,7 +18,29 @@ Este documento define o padrão de organização e desenvolvimento para frontend
 | i18next + react-i18next | 23 | Internacionalização |
 | Tailwind CSS | 4 | Estilização utility-first |
 | ESLint | 9 | Linter (flat config) |
-| Vitest + Testing Library | latest | Testes unitários |
+| Vitest + Testing Library | 2.x | Testes unitários |
+| `@vitest/coverage-v8` | 2.x | Cobertura de código |
+| axios | 1.x | HTTP client |
+
+### Requisitos obrigatórios de configuração
+
+**`package.json`** — declare `"type": "module"`. Sem isso, pacotes ESM como `@tailwindcss/vite` falham com erro de módulo CommonJS:
+
+```json
+{
+  "type": "module"
+}
+```
+
+**`tsconfig.json`** — declare `"types": ["vite/client"]` em `compilerOptions`. Sem isso, `import.meta.env` não tem tipo e o TypeScript acusa erro:
+
+```json
+{
+  "compilerOptions": {
+    "types": ["vite/client"]
+  }
+}
+```
 
 ---
 
@@ -44,6 +66,7 @@ src/
 │   │       └── translation.json
 │   └── index.ts               → configuração do i18next
 ├── lib/
+│   ├── api.ts                 → instância axios tipada (ApiInstance) + interceptor de resposta
 │   ├── queryClient.ts         → instância e configuração global do QueryClient
 │   └── cn.ts                  → helper para merge de classes Tailwind (clsx + tailwind-merge)
 ├── services/
@@ -300,6 +323,61 @@ const { user } = useAuth()
   - Estado local de um componente → use useState
   - Estado de formulário → use react-hook-form ou useState
   - Cache de requisições → use React Query
+```
+
+---
+
+## API Client (Axios)
+
+Toda comunicação com o backend passa por uma instância axios centralizada em `src/lib/api.ts`.
+
+O interceptor de resposta extrai `.data` de cada `AxiosResponse` automaticamente. Para que o TypeScript entenda isso sem que cada serviço precise de cast, o objeto exportado é tipado com `ApiInstance` — um tipo que declara os métodos retornando `Promise<T>` diretamente:
+
+```typescript
+// src/lib/api.ts
+import axios from 'axios'
+
+// Informa ao TypeScript que o interceptor já extraiu .data —
+// os serviços recebem T diretamente, sem AxiosResponse<T>.
+type ApiInstance = {
+  get<T>(url: string, config?: object): Promise<T>
+  post<T>(url: string, data?: unknown, config?: object): Promise<T>
+  put<T>(url: string, data?: unknown, config?: object): Promise<T>
+  patch<T>(url: string, data?: unknown, config?: object): Promise<T>
+  delete<T>(url: string, config?: object): Promise<T>
+}
+
+const axiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5000',
+  headers: { 'Content-Type': 'application/json' },
+})
+
+axiosInstance.interceptors.response.use(
+  (response) => response.data,
+  (error) => Promise.reject(error),
+)
+
+export const api = axiosInstance as unknown as ApiInstance
+```
+
+Com isso, os serviços chamam `api.get<T>()` e recebem `Promise<T>` — sem nenhum cast:
+
+```typescript
+// ✅ Sem cast — api.get<ApiResponse<Order>> retorna Promise<ApiResponse<Order>>
+const order = await api.get<ApiResponse<Order>>('/orders/1')
+
+// ❌ Sem ApiInstance — TypeScript acusaria erro de tipo
+const order = await axiosInstance.get<ApiResponse<Order>>('/orders/1') // AxiosResponse<...>, não ApiResponse<...>
+```
+
+Se a API exigir autenticação via JWT, adicione o interceptor de request antes do de response:
+
+```typescript
+axiosInstance.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
 ```
 
 ---
@@ -844,10 +922,10 @@ vi.mock('@/lib/api', () => ({
 const mockGet = vi.mocked(api.get)
 
 describe('ping', () => {
-  beforeEach(() => mockGet.mockClear())
+  beforeEach(() => mockGet.mockReset())  // mockReset limpa implementações; mockClear só limpa contagens
 
   it('calls GET /ping and returns { status: "ok" }', async () => {
-    mockGet.mockResolvedValue({ status: 'ok' })
+    mockGet.mockResolvedValueOnce({ status: 'ok' })
 
     const result = await ping()
 
@@ -856,17 +934,17 @@ describe('ping', () => {
   })
 
   it('propagates rejection when backend is unreachable', async () => {
-    mockGet.mockRejectedValue(new Error('Network Error'))
+    mockGet.mockRejectedValueOnce(new Error('Network Error'))  // Once, não Value — veja nota abaixo
 
     await expect(ping()).rejects.toThrow('Network Error')
   })
 })
 
 describe('checkHealth', () => {
-  beforeEach(() => mockGet.mockClear())
+  beforeEach(() => mockGet.mockReset())
 
   it('returns Healthy when all checks pass', async () => {
-    mockGet.mockResolvedValue({ status: 'Healthy', checks: [] })
+    mockGet.mockResolvedValueOnce({ status: 'Healthy', checks: [] })
 
     const result = await checkHealth()
 
@@ -874,7 +952,7 @@ describe('checkHealth', () => {
   })
 
   it('returns Unhealthy with check details when a dependency fails', async () => {
-    mockGet.mockResolvedValue({
+    mockGet.mockResolvedValueOnce({
       status: 'Unhealthy',
       checks: [{ name: 'postgresql', status: 'Unhealthy', description: 'Connection refused' }],
     })
@@ -886,6 +964,11 @@ describe('checkHealth', () => {
   })
 })
 ```
+
+> **Vitest 2.x — `mockReset` e `mockRejectedValueOnce`**
+>
+> - `mockClear()` limpa apenas o histórico de chamadas (`.mock.calls`), **não** as implementações registradas. Use sempre `mockReset()` no `beforeEach` para garantir que implementações de um teste não vazem para o próximo.
+> - `mockRejectedValue(err)` (versão permanente) armazena internamente um `Promise.reject()` criado imediatamente. O Vitest 2.x detecta essa promise como "não tratada" antes que o teste possa capturá-la, o que faz o teste falhar mesmo com a assertion correta. Use `mockRejectedValueOnce(err)` — ele cria a promise rejeitada de forma preguiçosa, apenas quando o mock é chamado.
 
 O módulo de serviço que esses testes exercitam:
 
@@ -899,13 +982,60 @@ export interface HealthCheckResult {
 }
 
 export async function ping(): Promise<{ status: string }> {
-  return api.get('/ping')
+  return await api.get('/ping')  // return await — necessário para propagação correta de rejeições
 }
 
 export async function checkHealth(): Promise<HealthCheckResult> {
-  return api.get('/health')
+  return await api.get('/health')
 }
 ```
+
+---
+
+### Testes de hook React Query
+
+Para testar hooks `useQuery`/`useMutation` em isolamento (sem renderizar um componente completo), use `renderHook` com um wrapper que fornece o `QueryClientProvider`:
+
+```typescript
+// services/projects/queries.test.ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { renderHook, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createElement, type ReactNode } from 'react'
+import { useProjects } from './queries'
+import { api } from '@/lib/api'
+
+vi.mock('@/lib/api', () => ({
+  api: { get: vi.fn() },
+}))
+
+const mockGet = vi.mocked(api.get)
+
+function wrapper({ children }: { children: ReactNode }) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  return createElement(QueryClientProvider, { client }, children)
+}
+
+describe('useProjects', () => {
+  beforeEach(() => mockGet.mockReset())
+
+  it('fetches and exposes the projects list', async () => {
+    const projects = [{ id: 1, name: 'My Docs', description: null }]
+    mockGet.mockResolvedValueOnce({ success: true, data: projects })
+
+    const { result } = renderHook(() => useProjects(), { wrapper })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/projects')
+    expect(result.current.data).toEqual(projects)
+  })
+})
+```
+
+> Crie um `QueryClient` novo dentro da função `wrapper` para cada teste — isso garante isolamento de cache entre testes.
 
 ---
 
@@ -1109,6 +1239,13 @@ export function UserCard({ user, onSelect, compact = false }: UserCardProps) {
 
 ---
 
+## Checklist para novo projeto
+
+- [ ] `"type": "module"` declarado no `package.json`
+- [ ] `"types": ["vite/client"]` em `compilerOptions` do `tsconfig.json`
+- [ ] `src/lib/api.ts` criado com `ApiInstance` + interceptor de resposta (extrai `.data`)
+- [ ] Se precisar de JWT: interceptor de request no `api.ts` lê token do store Zustand
+
 ## Checklist para nova feature
 
 - [ ] Pasta `features/{feature}/` criada com `components/`, `hooks/`, `index.ts`
@@ -1123,6 +1260,8 @@ export function UserCard({ user, onSelect, compact = false }: UserCardProps) {
 - [ ] Textos visíveis ao usuário usando `t()` do i18n
 - [ ] Funções utilitárias novas em `helpers/` com teste unitário
 - [ ] Novos serviços de API em `services/{dominio}/` com teste de contrato (`vi.mock`)
+- [ ] Testes de serviço usam `mockReset()` no `beforeEach` e `mockRejectedValueOnce()` (não `mockRejectedValue`)
+- [ ] Funções async de serviço usam `return await` (não `return`) para propagação correta de erros
 - [ ] Exports públicos da feature via `index.ts`
 
 ## Checklist para novo componente reutilizável
