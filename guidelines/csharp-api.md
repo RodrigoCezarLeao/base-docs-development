@@ -423,12 +423,27 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new()
+    {
+        Title = "Minha API",
+        Version = "v1",
+        Description = "Descrição da API."
+    });
+});
+
+builder.Services.AddHealthChecks();
+// Para verificar conectividade com o banco, adicione:
+// builder.Services.AddHealthChecks().AddNpgsql(connectionString);
+// (requer NuGet: AspNetCore.HealthChecks.Npgsql)
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
+
+app.Services.GetRequiredService<IMigrationRunner>().Run();
 
 if (app.Environment.IsDevelopment())
 {
@@ -436,18 +451,113 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Executa migrações antes de aceitar requisições
-app.Services.GetRequiredService<IMigrationRunner>().Run();
-
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+
+// Liveness — sem dependências, sempre responde
+app.MapGet("/ping", () => Results.Ok(new { status = "ok" }))
+   .ExcludeFromDescription();
+
+// Readiness — verifica saúde das dependências registradas
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name    = e.Key,
+                status  = e.Value.Status.ToString(),
+                description = e.Value.Description
+            })
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
+
 app.Run();
 
 // Expõe Program para WebApplicationFactory nos testes de integração
 public partial class Program { }
 ```
+
+### Swagger
+
+O Swagger é configurado via `Swashbuckle.AspNetCore` e exposto apenas em `Development`.
+
+```csharp
+// Registro
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new()
+    {
+        Title  = "Minha API",
+        Version = "v1",
+        Description = "Descrição da API."
+    });
+});
+
+// Middleware
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(); // UI em /swagger
+}
+```
+
+Para que os endpoints apareçam corretamente no Swagger, os controllers devem declarar `[Produces("application/json")]` e os métodos devem usar `[ProducesResponseType]`:
+
+```csharp
+[Produces("application/json")]
+public class PedidosController : ControllerBase
+{
+    [HttpGet("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById(int id) { ... }
+}
+```
+
+UI disponível em: `http://localhost:{porta}/swagger`
+
+### Health Checks
+
+Toda API deve expor dois endpoints de verificação de saúde:
+
+| Endpoint | Finalidade | Verifica banco? |
+|---|---|---|
+| `GET /ping` | Liveness — a aplicação está viva? | Não |
+| `GET /health` | Readiness — as dependências estão disponíveis? | Sim (se configurado) |
+
+`/ping` é um endpoint minimal API simples, sem overhead de dependências. É usado por orquestradores (Kubernetes, Railway, Render) para saber se o processo está rodando.
+
+`/health` usa o sistema de health checks do ASP.NET Core. Em produção, adicione verificação de banco:
+
+```bash
+dotnet add package AspNetCore.HealthChecks.Npgsql
+```
+
+```csharp
+builder.Services.AddHealthChecks()
+    .AddNpgsql(connectionString, name: "postgresql");
+```
+
+Resposta de `/health` (JSON customizado):
+```json
+{
+  "status": "Healthy",
+  "checks": [
+    { "name": "postgresql", "status": "Healthy", "description": null }
+  ]
+}
+```
+
+Quando uma dependência falha, `/health` retorna `503 Service Unavailable` com `"status": "Unhealthy"`.
 
 ---
 
@@ -705,6 +815,7 @@ tests/{Nome}.Tests/
 │       └── {Entidade}ServiceTests.cs
 └── Integration/
     ├── ApiFactory.cs
+    ├── HealthCheckTests.cs
     └── Controllers/
         └── {Entidade}sControllerTests.cs
 ```
@@ -791,6 +902,41 @@ public class ApiFactory : WebApplicationFactory<Program>
 internal sealed class NoOpMigrationRunner : IMigrationRunner
 {
     public void Run() { }
+}
+```
+
+#### Testes de Health Check
+
+```csharp
+public class HealthCheckTests : IClassFixture<ApiFactory>
+{
+    private readonly HttpClient _client;
+
+    public HealthCheckTests(ApiFactory factory) => _client = factory.CreateClient();
+
+    [Fact]
+    public async Task GET_Ping_Returns200WithStatusOk()
+    {
+        var response = await _client.GetAsync("/ping");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var body = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(body);
+        doc.RootElement.GetProperty("status").GetString().Should().Be("ok");
+    }
+
+    [Fact]
+    public async Task GET_Health_Returns200WhenHealthy()
+    {
+        var response = await _client.GetAsync("/health");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var body = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(body);
+        doc.RootElement.GetProperty("status").GetString().Should().Be("Healthy");
+    }
 }
 ```
 
@@ -897,11 +1043,15 @@ dotnet test -v normal              # output detalhado
 
 **Api**
 - [ ] `Api/Controllers/{Entidade}sController.cs`
+- [ ] `[Produces("application/json")]` e `[ProducesResponseType]` em todos os métodos do controller
 
 **Testes**
 - [ ] `tests/.../Unit/Services/{Entidade}ServiceTests.cs` — GetById found/not-found, Create, Update, Delete
 - [ ] `tests/.../Integration/Controllers/{Entidade}sControllerTests.cs` — todos os endpoints HTTP
+- [ ] `tests/.../Integration/HealthCheckTests.cs` — `/ping` e `/health`
 
 **Infraestrutura local**
 - [ ] `docker-compose.yml` com serviço PostgreSQL
+- [ ] `AddHealthChecks()` em `Program.cs` + endpoints `/ping` e `/health`
+- [ ] Swagger configurado com título e descrição (`SwaggerDoc("v1", ...)`)
 - [ ] `public partial class Program { }` no final de `Program.cs`

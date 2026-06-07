@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using TemperatureApi.Api.Middleware;
 using TemperatureApi.Application;
 using TemperatureApi.Infrastructure;
@@ -9,8 +11,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new() { Title = "Temperature API", Version = "v1" });
+    options.SwaggerDoc("v1", new()
+    {
+        Title = "Temperature API",
+        Version = "v1",
+        Description = "API de monitoramento de temperaturas."
+    });
 });
+
+builder.Services.AddHealthChecks();
 
 builder.Services.AddCors(options =>
 {
@@ -25,7 +34,6 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-// Executa as migrations antes de aceitar requisições
 app.Services.GetRequiredService<IMigrationRunner>().Run();
 
 if (app.Environment.IsDevelopment())
@@ -40,7 +48,30 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
+// Liveness — responde imediatamente, sem verificar dependências
+app.MapGet("/ping", () => Results.Ok(new { status = "ok" }))
+   .ExcludeFromDescription();
+
+// Readiness — verifica saúde das dependências registradas
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                description = e.Value.Description
+            })
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
+
 app.Run();
 
-// Expõe Program para WebApplicationFactory nos testes
 public partial class Program { }
