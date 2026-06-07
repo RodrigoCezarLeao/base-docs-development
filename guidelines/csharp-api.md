@@ -1052,6 +1052,12 @@ public class HealthCheckTests : IClassFixture<ApiFactory>
 
 #### Testes de Controller
 
+> **Atenção — `CancellationToken` nos mocks de integração**
+>
+> O ASP.NET Core injeta um `CancellationToken` real (vinculado ao ciclo de vida da requisição HTTP) nos parâmetros do controller. O NSubstitute faz matching **exato** de todos os argumentos; se o mock foi configurado com `GetByIdAsync(1)` (que compila como `GetByIdAsync(1, CancellationToken.None)`), ele **não** vai casar com `GetByIdAsync(1, httpContextToken)` e retornará `null` silenciosamente.
+>
+> Use sempre `Arg.Any<CancellationToken>()` em todos os setups de integração. Isso não afeta testes unitários (onde o token passado é `default`).
+
 ```csharp
 public class PedidosControllerTests : IClassFixture<ApiFactory>
 {
@@ -1067,7 +1073,8 @@ public class PedidosControllerTests : IClassFixture<ApiFactory>
     [Fact]
     public async Task GET_ById_WhenExists_Returns200()
     {
-        _repository.GetByIdAsync(1).Returns(new Pedido { Id = 1, Numero = "P001", Total = 100m, IsActive = true });
+        _repository.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new Pedido { Id = 1, Numero = "P001", Total = 100m, IsActive = true });
 
         var response = await _client.GetAsync("/api/v1/pedidos/1");
 
@@ -1077,7 +1084,7 @@ public class PedidosControllerTests : IClassFixture<ApiFactory>
     [Fact]
     public async Task GET_ById_WhenNotFound_Returns404()
     {
-        _repository.GetByIdAsync(999).ReturnsNull();
+        _repository.GetByIdAsync(999, Arg.Any<CancellationToken>()).ReturnsNull();
 
         var response = await _client.GetAsync("/api/v1/pedidos/999");
 
@@ -1087,7 +1094,7 @@ public class PedidosControllerTests : IClassFixture<ApiFactory>
     [Fact]
     public async Task POST_ValidRequest_Returns201WithLocation()
     {
-        _repository.CreateAsync(Arg.Any<Pedido>()).Returns(10);
+        _repository.CreateAsync(Arg.Any<Pedido>(), Arg.Any<CancellationToken>()).Returns(10);
 
         var request = new CreatePedidoRequest("P001", 100m);
         var response = await _client.PostAsJsonAsync("/api/v1/pedidos", request);
@@ -1146,7 +1153,7 @@ dotnet test -v normal              # output detalhado
 - [ ] `Application/Services/{Entidade}Service.cs`
 
 **Infrastructure**
-- [ ] `Infrastructure/Repositories/Interfaces/I{Entidade}Repository.cs`
+- [ ] `Application/Interfaces/I{Entidade}Repository.cs` (contrato fica na camada Application, não em Infrastructure)
 - [ ] `Infrastructure/Repositories/{Entidade}Repository.cs` (SQL em snake_case, `RETURNING id`, `LIMIT/OFFSET`)
 - [ ] `Infrastructure/Migrations/Scripts/NNN_Create{Entidade}Table.sql` (como `EmbeddedResource`)
 - [ ] Registrar no DI de Application e Infrastructure
