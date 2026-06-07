@@ -3,10 +3,11 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ReturnsExtensions;
+using TemperatureApi.Application.Interfaces;
 using TemperatureApi.Application.Requests;
 using TemperatureApi.Domain.Models;
-using TemperatureApi.Application.Interfaces;
 using TemperatureApi.Tests.Integration;
+using Xunit;
 
 namespace TemperatureApi.Tests.Integration.Controllers;
 

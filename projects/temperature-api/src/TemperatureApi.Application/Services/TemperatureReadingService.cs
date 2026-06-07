@@ -3,7 +3,6 @@ using TemperatureApi.Application.Interfaces;
 using TemperatureApi.Application.Requests;
 using TemperatureApi.Application.Responses;
 using TemperatureApi.Domain.Models;
-using TemperatureApi.Application.Interfaces;
 
 namespace TemperatureApi.Application.Services;
 

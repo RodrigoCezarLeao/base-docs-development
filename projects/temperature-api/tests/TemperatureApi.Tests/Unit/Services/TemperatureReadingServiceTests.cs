@@ -1,10 +1,11 @@
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ReturnsExtensions;
+using TemperatureApi.Application.Interfaces;
 using TemperatureApi.Application.Requests;
 using TemperatureApi.Application.Services;
 using TemperatureApi.Domain.Models;
-using TemperatureApi.Application.Interfaces;
+using Xunit;
 
 namespace TemperatureApi.Tests.Unit.Services;
 

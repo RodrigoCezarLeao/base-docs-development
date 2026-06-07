@@ -6,7 +6,6 @@ using DocMap.Application.Interfaces;
 using DocMap.Application.Requests;
 using DocMap.Application.Responses;
 using DocMap.Domain.Models;
-using DocMap.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
