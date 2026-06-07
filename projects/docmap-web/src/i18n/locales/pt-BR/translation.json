@@ -1,0 +1,43 @@
+{
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "create": "Criar",
+    "loading": "Carregando...",
+    "error": "Ocorreu um erro",
+    "logout": "Sair"
+  },
+  "auth": {
+    "login": "Entrar",
+    "register": "Cadastrar",
+    "email": "E-mail",
+    "password": "Senha",
+    "name": "Nome",
+    "loginTitle": "Entrar no DocMap",
+    "registerTitle": "Criar conta",
+    "noAccount": "Não tem conta?",
+    "hasAccount": "Já tem conta?",
+    "loginError": "E-mail ou senha incorretos"
+  },
+  "projects": {
+    "title": "Meus Projetos",
+    "create": "Novo Projeto",
+    "name": "Nome",
+    "description": "Descrição",
+    "empty": "Nenhum projeto ainda. Crie o primeiro!",
+    "documents": "documentos",
+    "export": "Exportar",
+    "delete": "Excluir projeto"
+  },
+  "canvas": {
+    "newDocument": "Novo Documento",
+    "title": "Título",
+    "filePath": "Caminho (ex: folder/doc.md)",
+    "content": "Conteúdo Markdown",
+    "connect": "Conectar",
+    "deleteNode": "Excluir nó",
+    "deleteEdge": "Excluir conexão",
+    "noSelection": "Clique em um nó para editar"
+  }
+}

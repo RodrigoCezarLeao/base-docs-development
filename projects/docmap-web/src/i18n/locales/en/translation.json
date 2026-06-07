@@ -1,0 +1,43 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "create": "Create",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "loginTitle": "Sign in to DocMap",
+    "registerTitle": "Create account",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginError": "Invalid email or password"
+  },
+  "projects": {
+    "title": "My Projects",
+    "create": "New Project",
+    "name": "Name",
+    "description": "Description",
+    "empty": "No projects yet. Create the first one!",
+    "documents": "documents",
+    "export": "Export",
+    "delete": "Delete project"
+  },
+  "canvas": {
+    "newDocument": "New Document",
+    "title": "Title",
+    "filePath": "Path (e.g.: folder/doc.md)",
+    "content": "Markdown Content",
+    "connect": "Connect",
+    "deleteNode": "Delete node",
+    "deleteEdge": "Delete connection",
+    "noSelection": "Click a node to edit"
+  }
+}
