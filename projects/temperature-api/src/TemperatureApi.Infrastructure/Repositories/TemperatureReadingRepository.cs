@@ -11,14 +11,14 @@ public class TemperatureReadingRepository(IDbConnectionFactory connectionFactory
 {
     public override async Task<TemperatureReading?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        const string sql = "SELECT * FROM TemperatureReadings WHERE Id = @Id AND IsActive = 1";
+        const string sql = "SELECT * FROM temperature_readings WHERE id = @Id AND is_active = true";
         return await QueryAsync(conn =>
             conn.QueryFirstOrDefaultAsync<TemperatureReading>(sql, new { Id = id }), cancellationToken);
     }
 
     public override async Task<IEnumerable<TemperatureReading>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        const string sql = "SELECT * FROM TemperatureReadings WHERE IsActive = 1 ORDER BY RecordedAt DESC";
+        const string sql = "SELECT * FROM temperature_readings WHERE is_active = true ORDER BY recorded_at DESC";
         return await QueryAsync(conn => conn.QueryAsync<TemperatureReading>(sql), cancellationToken);
     }
 
@@ -26,11 +26,11 @@ public class TemperatureReadingRepository(IDbConnectionFactory connectionFactory
         int page, int pageSize, CancellationToken cancellationToken = default)
     {
         const string sql = @"
-            SELECT * FROM TemperatureReadings WHERE IsActive = 1
-            ORDER BY RecordedAt DESC
-            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+            SELECT * FROM temperature_readings WHERE is_active = true
+            ORDER BY recorded_at DESC
+            LIMIT @PageSize OFFSET @Offset;
 
-            SELECT COUNT(*) FROM TemperatureReadings WHERE IsActive = 1;";
+            SELECT COUNT(*) FROM temperature_readings WHERE is_active = true;";
 
         return await QueryAsync(async conn =>
         {
@@ -48,9 +48,9 @@ public class TemperatureReadingRepository(IDbConnectionFactory connectionFactory
     public override async Task<int> CreateAsync(TemperatureReading entity, CancellationToken cancellationToken = default)
     {
         const string sql = @"
-            INSERT INTO TemperatureReadings (Location, ValueCelsius, RecordedAt, IsActive, CreatedAt)
-            OUTPUT INSERTED.Id
-            VALUES (@Location, @ValueCelsius, @RecordedAt, @IsActive, @CreatedAt)";
+            INSERT INTO temperature_readings (location, value_celsius, recorded_at, is_active, created_at)
+            VALUES (@Location, @ValueCelsius, @RecordedAt, @IsActive, @CreatedAt)
+            RETURNING id";
 
         entity.CreatedAt = DateTime.UtcNow;
         return await QueryAsync(conn =>
@@ -60,10 +60,13 @@ public class TemperatureReadingRepository(IDbConnectionFactory connectionFactory
     public override async Task<bool> UpdateAsync(TemperatureReading entity, CancellationToken cancellationToken = default)
     {
         const string sql = @"
-            UPDATE TemperatureReadings
-            SET Location = @Location, ValueCelsius = @ValueCelsius,
-                RecordedAt = @RecordedAt, IsActive = @IsActive, UpdatedAt = @UpdatedAt
-            WHERE Id = @Id";
+            UPDATE temperature_readings
+            SET location      = @Location,
+                value_celsius = @ValueCelsius,
+                recorded_at   = @RecordedAt,
+                is_active     = @IsActive,
+                updated_at    = @UpdatedAt
+            WHERE id = @Id";
 
         entity.UpdatedAt = DateTime.UtcNow;
         var affected = await QueryAsync(conn => conn.ExecuteAsync(sql, entity), cancellationToken);
@@ -72,7 +75,7 @@ public class TemperatureReadingRepository(IDbConnectionFactory connectionFactory
 
     public override async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        const string sql = "UPDATE TemperatureReadings SET IsActive = 0, UpdatedAt = @UpdatedAt WHERE Id = @Id";
+        const string sql = "UPDATE temperature_readings SET is_active = false, updated_at = @UpdatedAt WHERE id = @Id";
         var affected = await QueryAsync(conn =>
             conn.ExecuteAsync(sql, new { Id = id, UpdatedAt = DateTime.UtcNow }), cancellationToken);
         return affected > 0;

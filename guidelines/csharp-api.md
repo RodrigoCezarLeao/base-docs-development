@@ -18,9 +18,10 @@ src/
 ├── {Nome}.Api             → Entrada HTTP: controllers, middleware, Program.cs
 ├── {Nome}.Application     → Regras de negócio: services, DTOs, requests, responses
 ├── {Nome}.Domain          → Entidades de domínio: models puros
-└── {Nome}.Infrastructure  → Acesso a dados: Dapper, repositórios, fábrica de conexão
-migrations/
-└── 001_Create{Entidade}Table.sql
+└── {Nome}.Infrastructure  → Acesso a dados: Dapper, repositórios, fábrica de conexão, migrações
+tests/
+└── {Nome}.Tests           → Testes unitários (Unit/) e de integração (Integration/)
+docker-compose.yml         → Banco PostgreSQL para desenvolvimento local
 ```
 
 **Direção das dependências** (nunca invertida):
@@ -193,9 +194,10 @@ public interface IDbConnectionFactory
     IDbConnection CreateConnection();
 }
 
+// PostgreSQL (padrão)
 public class DbConnectionFactory(string connectionString) : IDbConnectionFactory
 {
-    public IDbConnection CreateConnection() => new SqlConnection(connectionString);
+    public IDbConnection CreateConnection() => new NpgsqlConnection(connectionString);
 }
 ```
 
@@ -423,8 +425,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddApplication();       // extension method em Application/DependencyInjection.cs
-builder.Services.AddInfrastructure(builder.Configuration); // extension method em Infrastructure/DependencyInjection.cs
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
@@ -434,11 +436,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Executa migrações antes de aceitar requisições
+app.Services.GetRequiredService<IMigrationRunner>().Run();
+
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
+
+// Expõe Program para WebApplicationFactory nos testes de integração
+public partial class Program { }
 ```
 
 ---
@@ -461,7 +469,11 @@ public static IServiceCollection AddInfrastructure(this IServiceCollection servi
     var cs = configuration.GetConnectionString("DefaultConnection")
         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
+    // Mapeia snake_case do PostgreSQL para PascalCase do C# automaticamente
+    DefaultTypeMap.MatchNamesWithUnderscores = true;
+
     services.AddSingleton<IDbConnectionFactory>(_ => new DbConnectionFactory(cs));
+    services.AddSingleton<IMigrationRunner>(_ => new DbUpMigrationRunner(cs));
     services.AddScoped<IPedidoRepository, PedidoRepository>();
     return services;
 }
@@ -469,20 +481,382 @@ public static IServiceCollection AddInfrastructure(this IServiceCollection servi
 
 ---
 
-## Migration SQL
+## Banco de Dados — PostgreSQL
+
+O banco padrão para desenvolvimento local é **PostgreSQL 16** rodando via Docker.
+
+### docker-compose.yml
+
+```yaml
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: minha_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d minha_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
+```
+
+### Connection string (appsettings.json)
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=minha_db;Username=postgres;Password=postgres"
+  }
+}
+```
+
+### Iniciar o banco
+
+```bash
+docker compose up -d
+```
+
+### Convenções SQL com PostgreSQL
+
+| Aspecto | SQL Server | PostgreSQL |
+|---|---|---|
+| Auto-increment | `INT IDENTITY(1,1)` | `SERIAL` ou `GENERATED ALWAYS AS IDENTITY` |
+| Strings | `NVARCHAR(n)` | `VARCHAR(n)` |
+| Data/hora | `DATETIME2` | `TIMESTAMPTZ` |
+| Boolean | `BIT` (0/1) | `BOOLEAN` (true/false) |
+| Retornar id inserido | `OUTPUT INSERTED.Id` | `RETURNING id` |
+| Paginação | `OFFSET n FETCH NEXT m ROWS ONLY` | `LIMIT m OFFSET n` |
+| Nomes de colunas | PascalCase | **snake_case** (convenção PostgreSQL) |
+| Data atual | `GETUTCDATE()` | `NOW()` |
+
+O mapeamento automático entre snake_case do banco e PascalCase do C# é feito por `DefaultTypeMap.MatchNamesWithUnderscores = true` na configuração do Dapper.
+
+---
+
+## Migrações — DbUp
+
+As migrações são arquivos SQL numerados sequencialmente, executados automaticamente na inicialização da aplicação pelo **DbUp**.
+
+### Estrutura
+
+```
+Infrastructure/
+└── Migrations/
+    ├── IMigrationRunner.cs
+    ├── DbUpMigrationRunner.cs
+    └── Scripts/
+        ├── 001_CreatePedidosTable.sql
+        └── 002_AddPedidosIndex.sql
+```
+
+Os scripts são embutidos como `EmbeddedResource` no assembly:
+
+```xml
+<!-- TemperatureApi.Infrastructure.csproj -->
+<ItemGroup>
+  <EmbeddedResource Include="Migrations\Scripts\*.sql" />
+</ItemGroup>
+```
+
+### Interface e implementação
+
+```csharp
+// Permite trocar a implementação nos testes (NoOpMigrationRunner)
+public interface IMigrationRunner
+{
+    void Run();
+}
+
+public class DbUpMigrationRunner(string connectionString) : IMigrationRunner
+{
+    public void Run()
+    {
+        EnsureDatabase.For.PostgresqlDatabase(connectionString);
+
+        var upgrader = DeployChanges.To
+            .PostgresqlDatabase(connectionString)
+            .WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
+            .WithTransactionPerScript()
+            .LogToConsole()
+            .Build();
+
+        var result = upgrader.PerformUpgrade();
+        if (!result.Successful)
+            throw new Exception("Database migration failed.", result.Error);
+    }
+}
+```
+
+O DbUp armazena em `schemaversions` quais scripts já foram executados — re-execuções são seguras.
+
+### Template de script de migração
 
 ```sql
-CREATE TABLE Pedidos (
-    Id        INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-    Numero    NVARCHAR(50)      NOT NULL,
-    Total     DECIMAL(18,2)     NOT NULL,
-    IsActive  BIT               NOT NULL DEFAULT 1,
-    CreatedAt DATETIME2         NOT NULL DEFAULT GETUTCDATE(),
-    UpdatedAt DATETIME2         NULL
+-- 001_CreatePedidosTable.sql
+CREATE TABLE IF NOT EXISTS pedidos (
+    id         SERIAL PRIMARY KEY,
+    numero     VARCHAR(50)    NOT NULL,
+    total      NUMERIC(18,2)  NOT NULL,
+    is_active  BOOLEAN        NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ
 );
 
-CREATE INDEX IX_Pedidos_IsActive  ON Pedidos (IsActive);
-CREATE INDEX IX_Pedidos_CreatedAt ON Pedidos (CreatedAt DESC);
+CREATE INDEX IF NOT EXISTS ix_pedidos_is_active  ON pedidos (is_active);
+CREATE INDEX IF NOT EXISTS ix_pedidos_created_at ON pedidos (created_at DESC);
+```
+
+Regras para scripts de migração:
+- Nome: `NNN_DescricaoEmSnakeCase.sql` — ordena a execução
+- Sempre usar `IF NOT EXISTS` — idempotência
+- Nunca alterar um script já executado — criar novo script
+- Uma migration por feature/tabela
+
+### NuGet necessários (Infrastructure.csproj)
+
+```xml
+<PackageReference Include="Npgsql" Version="8.0.5" />
+<PackageReference Include="dbup-postgresql" Version="5.0.18" />
+<PackageReference Include="Dapper" Version="2.1.28" />
+```
+
+---
+
+## Repositório — SQL com PostgreSQL
+
+Diferenças em relação ao padrão SQL Server:
+
+```csharp
+// INSERT — retorna id com RETURNING
+public async Task<int> CreateAsync(Pedido entity, ...)
+{
+    const string sql = @"
+        INSERT INTO pedidos (numero, total, is_active, created_at)
+        VALUES (@Numero, @Total, @IsActive, @CreatedAt)
+        RETURNING id";
+
+    return await QueryAsync(conn =>
+        conn.ExecuteScalarAsync<int>(sql, entity), cancellationToken);
+}
+
+// SELECT paginado — LIMIT / OFFSET
+public async Task<(IEnumerable<Pedido>, int)> GetPagedAsync(int page, int pageSize, ...)
+{
+    const string sql = @"
+        SELECT * FROM pedidos WHERE is_active = TRUE
+        ORDER BY created_at DESC
+        LIMIT @PageSize OFFSET @Offset;
+
+        SELECT COUNT(*) FROM pedidos WHERE is_active = TRUE;";
+
+    return await QueryAsync(async conn =>
+    {
+        using var multi = await conn.QueryMultipleAsync(sql, new
+        {
+            Offset = (page - 1) * pageSize,
+            PageSize = pageSize
+        });
+        var items = await multi.ReadAsync<Pedido>();
+        var total = await multi.ReadFirstAsync<int>();
+        return (items, total);
+    }, cancellationToken);
+}
+
+// DELETE — sempre soft delete
+public async Task<bool> DeleteAsync(int id, ...)
+{
+    const string sql = "UPDATE pedidos SET is_active = FALSE, updated_at = @UpdatedAt WHERE id = @Id";
+    var affected = await QueryAsync(conn =>
+        conn.ExecuteAsync(sql, new { Id = id, UpdatedAt = DateTime.UtcNow }), cancellationToken);
+    return affected > 0;
+}
+```
+
+---
+
+## Testes Automatizados
+
+### Stack
+
+| Pacote | Versão | Uso |
+|---|---|---|
+| `xunit` | 2.9+ | Framework de testes |
+| `FluentAssertions` | 6.12+ | Asserções legíveis |
+| `NSubstitute` | 5.1+ | Mocks/stubs |
+| `Microsoft.AspNetCore.Mvc.Testing` | 8.0+ | Host de integração in-process |
+
+### Estrutura de pastas
+
+```
+tests/{Nome}.Tests/
+├── {Nome}.Tests.csproj
+├── Unit/
+│   └── Services/
+│       └── {Entidade}ServiceTests.cs
+└── Integration/
+    ├── ApiFactory.cs
+    └── Controllers/
+        └── {Entidade}sControllerTests.cs
+```
+
+### Testes Unitários — Service
+
+Testam o service em isolamento, substituindo o repositório por um mock do NSubstitute.
+
+```csharp
+public class PedidoServiceTests
+{
+    private readonly IPedidoRepository _repository = Substitute.For<IPedidoRepository>();
+    private readonly PedidoService _sut;
+
+    public PedidoServiceTests() => _sut = new PedidoService(_repository);
+
+    [Fact]
+    public async Task GetByIdAsync_WhenExists_ReturnsSuccess()
+    {
+        _repository.GetByIdAsync(1).Returns(new Pedido { Id = 1, Numero = "P001", Total = 100m });
+
+        var result = await _sut.GetByIdAsync(1);
+
+        result.Success.Should().BeTrue();
+        result.Data!.Id.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WhenNotFound_ReturnsFail()
+    {
+        _repository.GetByIdAsync(999).ReturnsNull();
+
+        var result = await _sut.GetByIdAsync(999);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Contain("999");
+    }
+
+    [Fact]
+    public async Task CreateAsync_CallsRepositoryWithMappedEntity()
+    {
+        var request = new CreatePedidoRequest("P001", 100m);
+        _repository.CreateAsync(Arg.Any<Pedido>()).Returns(42);
+
+        await _sut.CreateAsync(request);
+
+        await _repository.Received(1).CreateAsync(
+            Arg.Is<Pedido>(p => p.Numero == "P001" && p.Total == 100m));
+    }
+}
+```
+
+### Testes de Integração — Controller
+
+Testam o pipeline HTTP completo (middleware, serialização, status codes) sem banco real. O `ApiFactory` substitui toda a infraestrutura de dados por mocks.
+
+#### ApiFactory
+
+```csharp
+public class ApiFactory : WebApplicationFactory<Program>
+{
+    public IPedidoRepository RepositoryMock { get; } =
+        Substitute.For<IPedidoRepository>();
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        // Connection string falsa evita exceção no AddInfrastructure
+        builder.ConfigureAppConfiguration((_, config) =>
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            { ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test" }));
+
+        builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<IDbConnectionFactory>();
+            services.RemoveAll<IPedidoRepository>();
+            services.RemoveAll<IMigrationRunner>();
+
+            services.AddSingleton(RepositoryMock);
+            services.AddSingleton<IMigrationRunner, NoOpMigrationRunner>();
+        });
+    }
+}
+
+internal sealed class NoOpMigrationRunner : IMigrationRunner
+{
+    public void Run() { }
+}
+```
+
+#### Testes de Controller
+
+```csharp
+public class PedidosControllerTests : IClassFixture<ApiFactory>
+{
+    private readonly HttpClient _client;
+    private readonly IPedidoRepository _repository;
+
+    public PedidosControllerTests(ApiFactory factory)
+    {
+        _client = factory.CreateClient();
+        _repository = factory.RepositoryMock;
+    }
+
+    [Fact]
+    public async Task GET_ById_WhenExists_Returns200()
+    {
+        _repository.GetByIdAsync(1).Returns(new Pedido { Id = 1, Numero = "P001", Total = 100m, IsActive = true });
+
+        var response = await _client.GetAsync("/api/v1/pedidos/1");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GET_ById_WhenNotFound_Returns404()
+    {
+        _repository.GetByIdAsync(999).ReturnsNull();
+
+        var response = await _client.GetAsync("/api/v1/pedidos/999");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task POST_ValidRequest_Returns201WithLocation()
+    {
+        _repository.CreateAsync(Arg.Any<Pedido>()).Returns(10);
+
+        var request = new CreatePedidoRequest("P001", 100m);
+        var response = await _client.PostAsJsonAsync("/api/v1/pedidos", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.Headers.Location!.ToString().Should().Contain("/10");
+    }
+}
+```
+
+#### Requisito no Program.cs
+
+O `Program` precisa ser acessível para `WebApplicationFactory<Program>`. Adicione ao final do arquivo:
+
+```csharp
+public partial class Program { }
+```
+
+### Executar os testes
+
+```bash
+dotnet test
+dotnet test --filter "Unit"        # apenas unitários
+dotnet test --filter "Integration" # apenas integração
+dotnet test -v normal              # output detalhado
 ```
 
 ---
@@ -491,25 +865,43 @@ CREATE INDEX IX_Pedidos_CreatedAt ON Pedidos (CreatedAt DESC);
 
 | Regra | Detalhe |
 |---|---|
-| Soft delete | Sempre `UPDATE IsActive = 0`. Nunca `DELETE` físico. |
+| Soft delete | Sempre `UPDATE is_active = FALSE`. Nunca `DELETE` físico. |
 | `CancellationToken` | Obrigatório em todos os métodos `async`. |
-| Nomes de tabela | Plural (`Pedidos`). Nomes de classe no singular (`Pedido`). |
+| Nomes de tabela | Plural em snake_case (`pedidos`). Classe no singular PascalCase (`Pedido`). |
+| Colunas no banco | Sempre snake_case (`created_at`, `is_active`). Dapper mapeia via `MatchNamesWithUnderscores`. |
 | DTOs e Requests | Sempre `record` imutável. |
 | Versão da rota | Sempre prefixar com `api/v1/`. |
-| Dependências NuGet | Dapper `2.1.28`, Microsoft.Data.SqlClient `5.2.1`, Swashbuckle.AspNetCore `6.6.2`. |
+| Banco padrão | PostgreSQL 16 via Docker para dev local. |
+| Migrações | DbUp com scripts `.sql` numerados como `EmbeddedResource`. |
+| NuGet (Infrastructure) | `Dapper 2.1.28`, `Npgsql 8.0.5`, `dbup-postgresql 5.0.18`. |
+| NuGet (Api) | `Swashbuckle.AspNetCore 6.6.2`. |
+| NuGet (Tests) | `xunit 2.9+`, `FluentAssertions 6.12+`, `NSubstitute 5.1+`, `Microsoft.AspNetCore.Mvc.Testing 8.0+`. |
 | Target framework | .NET 8 com `Nullable enable` e `ImplicitUsings enable`. |
 
 ---
 
 ## Checklist para nova entidade
 
+**Domínio e Application**
 - [ ] `Domain/Models/{Entidade}.cs` com `Id`, `IsActive`, `CreatedAt`, `UpdatedAt`
 - [ ] `Application/DTOs/{Entidade}Dto.cs`
 - [ ] `Application/Requests/Create{Entidade}Request.cs` e `Update{Entidade}Request.cs`
 - [ ] `Application/Interfaces/I{Entidade}Service.cs`
 - [ ] `Application/Services/{Entidade}Service.cs`
+
+**Infrastructure**
 - [ ] `Infrastructure/Repositories/Interfaces/I{Entidade}Repository.cs`
-- [ ] `Infrastructure/Repositories/{Entidade}Repository.cs`
-- [ ] `Api/Controllers/{Entidade}sController.cs`
+- [ ] `Infrastructure/Repositories/{Entidade}Repository.cs` (SQL em snake_case, `RETURNING id`, `LIMIT/OFFSET`)
+- [ ] `Infrastructure/Migrations/Scripts/NNN_Create{Entidade}Table.sql` (como `EmbeddedResource`)
 - [ ] Registrar no DI de Application e Infrastructure
-- [ ] `migrations/NNN_Create{Entidade}Table.sql`
+
+**Api**
+- [ ] `Api/Controllers/{Entidade}sController.cs`
+
+**Testes**
+- [ ] `tests/.../Unit/Services/{Entidade}ServiceTests.cs` — GetById found/not-found, Create, Update, Delete
+- [ ] `tests/.../Integration/Controllers/{Entidade}sControllerTests.cs` — todos os endpoints HTTP
+
+**Infraestrutura local**
+- [ ] `docker-compose.yml` com serviço PostgreSQL
+- [ ] `public partial class Program { }` no final de `Program.cs`

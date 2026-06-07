@@ -1,6 +1,7 @@
 using TemperatureApi.Api.Middleware;
 using TemperatureApi.Application;
 using TemperatureApi.Infrastructure;
+using TemperatureApi.Infrastructure.Migrations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,9 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
+// Executa as migrations antes de aceitar requisições
+app.Services.GetRequiredService<IMigrationRunner>().Run();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -37,3 +41,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Expõe Program para WebApplicationFactory nos testes
+public partial class Program { }

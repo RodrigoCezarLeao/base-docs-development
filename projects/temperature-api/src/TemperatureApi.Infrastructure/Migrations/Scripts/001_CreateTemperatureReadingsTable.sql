@@ -1,6 +1,3 @@
--- PostgreSQL — executado automaticamente pelo DbUp no startup da API
--- Para rodar manualmente: psql -U postgres -d temperature_db -f migrations/001_CreateTemperatureReadingsTable.sql
-
 CREATE TABLE IF NOT EXISTS temperature_readings (
     id            SERIAL PRIMARY KEY,
     location      VARCHAR(100)   NOT NULL,
