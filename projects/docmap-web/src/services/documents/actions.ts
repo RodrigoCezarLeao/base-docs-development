@@ -9,10 +9,7 @@ export function useCreateDocument(projectId: number) {
 
   return useMutation({
     mutationFn: (dto: CreateDocumentDto) =>
-      api.post<ApiResponse<DocumentDto>>(
-        `/api/v1/projects/${projectId}/documents`,
-        dto,
-      ) as Promise<ApiResponse<DocumentDto>>,
+      api.post<ApiResponse<DocumentDto>>(`/api/v1/projects/${projectId}/documents`, dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: documentKeys.lists(projectId) })
     },
@@ -24,15 +21,10 @@ export function useUpdateDocument(projectId: number) {
 
   return useMutation({
     mutationFn: ({ id, dto }: { id: number; dto: UpdateDocumentDto }) =>
-      api.put<ApiResponse<DocumentDto>>(
-        `/api/v1/projects/${projectId}/documents/${id}`,
-        dto,
-      ) as Promise<ApiResponse<DocumentDto>>,
+      api.put<ApiResponse<DocumentDto>>(`/api/v1/projects/${projectId}/documents/${id}`, dto),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: documentKeys.lists(projectId) })
-      queryClient.invalidateQueries({
-        queryKey: documentKeys.detail(projectId, variables.id),
-      })
+      queryClient.invalidateQueries({ queryKey: documentKeys.detail(projectId, variables.id) })
     },
   })
 }
@@ -40,10 +32,7 @@ export function useUpdateDocument(projectId: number) {
 export function useUpdatePosition(projectId: number) {
   return useMutation({
     mutationFn: ({ id, dto }: { id: number; dto: UpdatePositionDto }) =>
-      api.patch(
-        `/api/v1/projects/${projectId}/documents/${id}/position`,
-        dto,
-      ),
+      api.patch(`/api/v1/projects/${projectId}/documents/${id}/position`, dto),
   })
 }
 
@@ -51,8 +40,7 @@ export function useDeleteDocument(projectId: number) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: number) =>
-      api.delete(`/api/v1/projects/${projectId}/documents/${id}`),
+    mutationFn: (id: number) => api.delete(`/api/v1/projects/${projectId}/documents/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: documentKeys.lists(projectId) })
     },

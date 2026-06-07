@@ -10,9 +10,9 @@ export interface HealthCheckResult {
 }
 
 export async function ping(): Promise<{ status: string }> {
-  return api.get('/ping')
+  return await api.get('/ping')
 }
 
 export async function checkHealth(): Promise<HealthCheckResult> {
-  return api.get('/health')
+  return await api.get('/health')
 }

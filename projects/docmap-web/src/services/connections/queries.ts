@@ -8,9 +8,7 @@ export function useConnections(projectId: number) {
   return useQuery({
     queryKey: connectionKeys.lists(projectId),
     queryFn: () =>
-      api.get<ApiResponse<ConnectionDto[]>>(
-        `/api/v1/projects/${projectId}/connections`,
-      ) as Promise<ApiResponse<ConnectionDto[]>>,
+      api.get<ApiResponse<ConnectionDto[]>>(`/api/v1/projects/${projectId}/connections`),
     select: (response) => response.data ?? [],
     enabled: !!projectId,
   })

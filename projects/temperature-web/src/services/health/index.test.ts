@@ -9,7 +9,7 @@ vi.mock('@/lib/api', () => ({
 const mockGet = vi.mocked(api.get)
 
 describe('ping', () => {
-  beforeEach(() => mockGet.mockClear())
+  beforeEach(() => mockGet.mockReset())
 
   it('calls GET /ping and returns status ok', async () => {
     mockGet.mockResolvedValue({ status: 'ok' })
@@ -20,15 +20,15 @@ describe('ping', () => {
     expect(result).toEqual({ status: 'ok' })
   })
 
-  it('propagates rejection when the backend is unreachable', async () => {
-    mockGet.mockRejectedValue(new Error('Network Error'))
+  it('rejects when the api call fails', async () => {
+    mockGet.mockRejectedValueOnce(new Error('Network Error'))
 
     await expect(ping()).rejects.toThrow('Network Error')
   })
 })
 
 describe('checkHealth', () => {
-  beforeEach(() => mockGet.mockClear())
+  beforeEach(() => mockGet.mockReset())
 
   it('calls GET /health and returns Healthy status', async () => {
     mockGet.mockResolvedValue({ status: 'Healthy', checks: [] })

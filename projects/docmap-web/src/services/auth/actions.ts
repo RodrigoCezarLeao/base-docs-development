@@ -9,7 +9,7 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: (dto: LoginDto) =>
-      api.post<ApiResponse<AuthResponse>>('/api/v1/auth/login', dto) as Promise<ApiResponse<AuthResponse>>,
+      api.post<ApiResponse<AuthResponse>>('/api/v1/auth/login', dto),
     onSuccess: (response) => {
       if (response.data) {
         setAuth(response.data.token, response.data.user)
@@ -23,7 +23,7 @@ export function useRegister() {
 
   return useMutation({
     mutationFn: (dto: RegisterDto) =>
-      api.post<ApiResponse<AuthResponse>>('/api/v1/auth/register', dto) as Promise<ApiResponse<AuthResponse>>,
+      api.post<ApiResponse<AuthResponse>>('/api/v1/auth/register', dto),
     onSuccess: (response) => {
       if (response.data) {
         setAuth(response.data.token, response.data.user)

@@ -9,7 +9,7 @@ export function useCreateProject() {
 
   return useMutation({
     mutationFn: (dto: CreateProjectDto) =>
-      api.post<ApiResponse<ProjectDto>>('/api/v1/projects', dto) as Promise<ApiResponse<ProjectDto>>,
+      api.post<ApiResponse<ProjectDto>>('/api/v1/projects', dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() })
     },
@@ -20,8 +20,7 @@ export function useDeleteProject() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: number) =>
-      api.delete(`/api/v1/projects/${id}`),
+    mutationFn: (id: number) => api.delete(`/api/v1/projects/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() })
     },
