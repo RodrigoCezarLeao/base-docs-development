@@ -667,6 +667,161 @@ it('calls onPageChange with page + 1 when next is clicked', async () => {
 
 ---
 
+## Error Boundary e Toast
+
+### Por que os dois juntos
+
+`ErrorBoundary` captura erros de renderização (crashes de componente) e exibe um fallback controlado no lugar do crash. Toast notifica o usuário sobre falhas em operações assíncronas (chamadas de API), que o `ErrorBoundary` não captura porque ocorrem fora do ciclo de render do React.
+
+### Dependência
+
+```bash
+npm install sonner
+```
+
+### `ErrorBoundary` — captura erros de renderização
+
+```tsx
+// components/ui/ErrorBoundary.tsx
+import { Component, type ErrorInfo, type ReactNode } from 'react'
+
+interface Props {
+  children: ReactNode
+  fallback?: ReactNode
+}
+
+interface State {
+  hasError: boolean
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  state: State = { hasError: false }
+
+  static getDerivedStateFromError(): State {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('ErrorBoundary:', error, info.componentStack)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        this.props.fallback ?? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <p className="text-lg font-semibold text-gray-800">Algo deu errado.</p>
+            <p className="mt-1 text-sm text-gray-500">Recarregue a página para tentar novamente.</p>
+            <button
+              className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+              onClick={() => this.setState({ hasError: false })}
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )
+      )
+    }
+
+    return this.props.children
+  }
+}
+```
+
+### Registrar `<Toaster>` e `<ErrorBoundary>` em `App.tsx`
+
+```tsx
+// App.tsx
+import { Toaster } from 'sonner'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
+
+export function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <HomePage />
+      </ErrorBoundary>
+      <Toaster position="bottom-right" richColors />
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  )
+}
+```
+
+`<Toaster>` fica **fora** do `<ErrorBoundary>` para continuar funcionando mesmo se a página crashar.
+
+### Toasts nas mutations
+
+Use `toast` do sonner diretamente nos callbacks `onSuccess`/`onError` das mutations. A função `toast` funciona fora de componentes React, tornando-a ideal para esse uso.
+
+```typescript
+// services/orders/actions.ts
+import { toast } from 'sonner'
+
+export function useCreateOrder() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (dto: CreateOrderDto) => api.post<Order>('/orders', dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() })
+      toast.success('Pedido criado com sucesso.')
+    },
+    onError: () => {
+      toast.error('Erro ao criar pedido.')
+    },
+  })
+}
+```
+
+> **Quando mover o toast para o call site?** Se a mesma mutation é usada em contextos diferentes com mensagens distintas, passe as mensagens como opção ou chame `toast` no `onSuccess` do `useMutation` no componente. Para o caso comum (uma mutation, uma mensagem), manter no `actions.ts` é mais simples.
+
+### Testes do `ErrorBoundary`
+
+```tsx
+function Bomb({ explode }: { explode: boolean }) {
+  if (explode) throw new Error('boom')
+  return <p>ok</p>
+}
+
+it('renders default fallback when a child throws', () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  render(
+    <ErrorBoundary>
+      <Bomb explode={true} />
+    </ErrorBoundary>,
+  )
+
+  expect(screen.getByText('Algo deu errado.')).toBeInTheDocument()
+  consoleError.mockRestore()
+})
+
+it('recovers when "Tentar novamente" is clicked', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  const { rerender } = render(
+    <ErrorBoundary>
+      <Bomb explode={true} />
+    </ErrorBoundary>,
+  )
+
+  // Atualiza o filho antes de limpar o estado; caso contrário o reset
+  // causa um novo throw e a boundary volta ao estado de erro imediatamente.
+  rerender(
+    <ErrorBoundary>
+      <Bomb explode={false} />
+    </ErrorBoundary>,
+  )
+
+  await userEvent.click(screen.getByText('Tentar novamente'))
+  expect(screen.getByText('ok')).toBeInTheDocument()
+  consoleError.mockRestore()
+})
+```
+
+---
+
 ## i18n
 
 ### Estrutura de arquivos

@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import type { ApiResponse } from '@/types'
 import { temperatureKeys } from './keys'
@@ -14,6 +15,10 @@ export function useCreateTemperature() {
       >,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: temperatureKeys.lists() })
+      toast.success('Leitura registrada com sucesso.')
+    },
+    onError: () => {
+      toast.error('Erro ao registrar leitura.')
     },
   })
 }
@@ -26,6 +31,10 @@ export function useDeleteTemperature() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: temperatureKeys.lists() })
       queryClient.removeQueries({ queryKey: temperatureKeys.detail(id) })
+      toast.success('Leitura removida.')
+    },
+    onError: () => {
+      toast.error('Erro ao remover leitura.')
     },
   })
 }
