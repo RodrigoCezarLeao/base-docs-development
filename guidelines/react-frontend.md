@@ -519,6 +519,154 @@ export const queryClient = new QueryClient({
 
 ---
 
+## Paginação
+
+O backend retorna `ApiResponse<PagedResponse<T>>` com `items`, `totalCount`, `page`, `pageSize`, `totalPages`, `hasNextPage` e `hasPreviousPage`. O frontend usa dois blocos reutilizáveis: o hook `usePagination` para estado e o componente `<Pagination>` para a UI.
+
+### `usePagination` — hook de estado
+
+```typescript
+// hooks/usePagination.ts
+import { useCallback, useState } from 'react'
+
+interface UsePaginationOptions {
+  initialPage?: number
+  pageSize?: number
+}
+
+export function usePagination({ initialPage = 1, pageSize = 10 }: UsePaginationOptions = {}) {
+  const [page, setPage] = useState(initialPage)
+
+  const nextPage = useCallback(() => setPage((p) => p + 1), [])
+  const prevPage = useCallback(() => setPage((p) => Math.max(1, p - 1)), [])
+  const goToPage = useCallback((n: number) => setPage(n), [])
+  const reset    = useCallback(() => setPage(initialPage), [initialPage])
+
+  return { page, pageSize, setPage, nextPage, prevPage, goToPage, reset }
+}
+```
+
+### `<Pagination>` — componente de UI
+
+```typescript
+// components/ui/Pagination.tsx
+import { Button } from './Button'
+
+interface PaginationProps {
+  page: number
+  totalPages: number
+  onPageChange: (page: number) => void
+}
+
+export function Pagination({ page, totalPages, onPageChange }: PaginationProps) {
+  if (totalPages <= 1) return null
+
+  return (
+    <nav aria-label="Paginação" className="flex items-center justify-center gap-2 mt-6">
+      <Button variant="secondary" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+        ←
+      </Button>
+      <span className="min-w-[5rem] text-center text-sm text-gray-700">
+        {page} / {totalPages}
+      </span>
+      <Button variant="secondary" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
+        →
+      </Button>
+    </nav>
+  )
+}
+```
+
+### Como usar nos hooks de feature
+
+```typescript
+// features/orders/hooks/useOrderList.ts
+import { usePagination } from '@/hooks/usePagination'
+import { useOrders } from '@/services/orders/queries'
+
+export function useOrderList() {
+  const { page, pageSize, setPage } = usePagination()
+  const { data, isLoading, isError } = useOrders(page, pageSize)
+
+  return {
+    orders:     data?.data?.items ?? [],
+    totalPages: data?.data?.totalPages ?? 1,
+    isLoading,
+    isError,
+    page,
+    setPage,
+  }
+}
+```
+
+```tsx
+// features/orders/components/OrderList.tsx
+import { Pagination } from '@/components/ui/Pagination'
+
+export function OrderList({ orders, page, totalPages, onPageChange, isLoading, isError }) {
+  if (isLoading) return <Spinner />
+  if (isError)   return <p>Erro ao carregar.</p>
+
+  return (
+    <div>
+      {orders.map((o) => <OrderCard key={o.id} order={o} />)}
+      <Pagination page={page} totalPages={totalPages} onPageChange={onPageChange} />
+    </div>
+  )
+}
+```
+
+### Testes
+
+Teste o hook com `renderHook` e o componente diretamente (sem necessidade de QueryClientProvider):
+
+```typescript
+// hooks/usePagination.test.ts
+import { act, renderHook } from '@testing-library/react'
+import { usePagination } from './usePagination'
+
+it('nextPage increments by 1', () => {
+  const { result } = renderHook(() => usePagination())
+  act(() => result.current.nextPage())
+  expect(result.current.page).toBe(2)
+})
+
+it('prevPage does not go below 1', () => {
+  const { result } = renderHook(() => usePagination())
+  act(() => result.current.prevPage())
+  expect(result.current.page).toBe(1)
+})
+
+it('reset returns to initialPage', () => {
+  const { result } = renderHook(() => usePagination({ initialPage: 3 }))
+  act(() => result.current.goToPage(9))
+  act(() => result.current.reset())
+  expect(result.current.page).toBe(3)
+})
+```
+
+```typescript
+// components/ui/Pagination.test.tsx
+it('renders nothing when totalPages is 1', () => {
+  const { container } = render(<Pagination page={1} totalPages={1} onPageChange={vi.fn()} />)
+  expect(container.firstChild).toBeNull()
+})
+
+it('disables prev button on first page', () => {
+  render(<Pagination page={1} totalPages={5} onPageChange={vi.fn()} />)
+  expect(screen.getByText('←').closest('button')).toBeDisabled()
+})
+
+it('calls onPageChange with page + 1 when next is clicked', async () => {
+  const onChange = vi.fn()
+  render(<Pagination page={3} totalPages={5} onPageChange={onChange} />)
+  await userEvent.click(screen.getByText('→'))
+  expect(onChange).toHaveBeenCalledWith(4)
+})
+```
+
+---
+
 ## i18n
 
 ### Estrutura de arquivos

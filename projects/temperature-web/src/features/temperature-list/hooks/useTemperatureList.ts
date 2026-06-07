@@ -1,13 +1,11 @@
-import { useState } from 'react'
-import { useTemperatures } from '@/services/temperatures/queries'
+import { usePagination } from '@/hooks/usePagination'
 import { useCreateTemperature } from '@/services/temperatures/actions'
-import { useTemperatureFilters } from '@/stores/temperature/hooks'
+import { useTemperatures } from '@/services/temperatures/queries'
 import type { CreateTemperatureReadingDto } from '@/services/temperatures/types'
+import { useTemperatureFilters } from '@/stores/temperature/hooks'
 
 export function useTemperatureList() {
-  const [page, setPage] = useState(1)
-  const pageSize = 10
-
+  const { page, pageSize, setPage } = usePagination()
   const { locationFilter, setLocationFilter, clearFilters } = useTemperatureFilters()
   const { data, isLoading, isError } = useTemperatures(page, pageSize)
   const createMutation = useCreateTemperature()
