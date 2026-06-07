@@ -1,0 +1,20 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "error": "Ocorreu um erro",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "add": "Adicionar",
+    "noData": "Nenhum dado encontrado"
+  },
+  "temperature": {
+    "title": "Monitor de Temperatura",
+    "location": "Local",
+    "value": "Temperatura",
+    "recordedAt": "Registrado em",
+    "addReading": "Adicionar Leitura",
+    "filterByLocation": "Filtrar por local",
+    "celsius": "°C",
+    "readingAdded": "Leitura adicionada com sucesso"
+  }
+}

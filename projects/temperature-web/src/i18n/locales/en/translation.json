@@ -1,0 +1,20 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "add": "Add",
+    "noData": "No data found"
+  },
+  "temperature": {
+    "title": "Temperature Monitor",
+    "location": "Location",
+    "value": "Temperature",
+    "recordedAt": "Recorded at",
+    "addReading": "Add Reading",
+    "filterByLocation": "Filter by location",
+    "celsius": "°C",
+    "readingAdded": "Reading added successfully"
+  }
+}
