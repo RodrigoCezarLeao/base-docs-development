@@ -1,6 +1,6 @@
-﻿# pnpm 11+ reads project-wide settings from this file instead of the "pnpm" field in package.json.
-# onlyBuiltDependencies: allowlist of packages permitted to run install scripts.
+﻿# pnpm 11+ uses allowBuilds (map format) instead of onlyBuiltDependencies (list format).
+# Set true to allow install scripts for packages that need native binaries.
 # All others are blocked by ignore-scripts=true in .npmrc.
-onlyBuiltDependencies:
-  - esbuild
-  - "@tailwindcss/oxide"
+allowBuilds:
+  esbuild: true
+  "@tailwindcss/oxide": true

@@ -1585,17 +1585,17 @@ strict-peer-dependencies=false
 
 `ignore-scripts=true` blocks all install scripts, including those needed by packages with native binaries. Without an allowlist, `esbuild` (used by Vite) and `@tailwindcss/oxide` (Tailwind v4's Rust engine) won't install their platform binaries and the project won't build.
 
-**pnpm 11+ change:** `onlyBuiltDependencies` must be declared in `pnpm-workspace.yaml`, not in `package.json`. The `pnpm` field in `package.json` is no longer read by pnpm 11 — placing `onlyBuiltDependencies` there silently does nothing, and the build will fail with `[ERR_PNPM_IGNORED_BUILDS]`.
+**pnpm 11+ change:** The `pnpm` field in `package.json` is no longer read by pnpm 11. The build approval mechanism also changed: `onlyBuiltDependencies` (list) was replaced by `allowBuilds` (map with `true/false`). Using the old form silently does nothing and `pnpm install` fails with `[ERR_PNPM_IGNORED_BUILDS]`.
 
 Create `pnpm-workspace.yaml` at the project root:
 
 ```yaml
-# pnpm 11+ reads project-wide settings from this file instead of the "pnpm" field in package.json.
-# onlyBuiltDependencies: allowlist of packages permitted to run install scripts.
+# pnpm 11+ uses allowBuilds (map format) instead of onlyBuiltDependencies (list format).
+# Set true to allow install scripts for packages that need native binaries.
 # All others are blocked by ignore-scripts=true in .npmrc.
-onlyBuiltDependencies:
-  - esbuild
-  - "@tailwindcss/oxide"
+allowBuilds:
+  esbuild: true
+  "@tailwindcss/oxide": true
 ```
 
 This is safer than `ignore-scripts=false` because the allowlist is auditable and committed to the repo — any addition to it is visible in code review.
@@ -1614,7 +1614,7 @@ Some common recommendations don't have a direct pnpm/npm client config equivalen
 - [ ] `"type": "module"` declared in `package.json`
 - [ ] `"types": ["vite/client"]` in `compilerOptions` of `tsconfig.json`
 - [ ] `.npmrc` created with registry pin, `ignore-scripts`, `save-exact`, `lockfile`, `shamefully-hoist=false`
-- [ ] `pnpm-workspace.yaml` created at root with `onlyBuiltDependencies: [esbuild, "@tailwindcss/oxide"]` (pnpm 11+ — do NOT use the `pnpm` field in `package.json`)
+- [ ] `pnpm-workspace.yaml` created at root with `allowBuilds: { esbuild: true, "@tailwindcss/oxide": true }` (pnpm 11+ — do NOT use `onlyBuiltDependencies` or the `pnpm` field in `package.json`)
 - [ ] `"engines": { "node": ">=18.0.0", "pnpm": ">=9.0.0" }` in `package.json`
 - [ ] All dependency versions exact (no `^` or `~`) in `package.json`
 - [ ] `src/lib/api.ts` created with `ApiInstance` + response interceptor (extracts `.data`)
