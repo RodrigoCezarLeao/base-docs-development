@@ -272,6 +272,54 @@ import ReactFlow, { ConnectionMode } from 'reactflow'
 
 Without this, users can only connect by dragging from the bottom/right handles of one node to the top/left handles of another — any other combination fails silently.
 
+### ReactFlow — single source of truth for edge state
+
+When using React Query to load connections and `useEdgesState` to hold them locally, only one mechanism should write to `setEdges`. Having both an optimistic update in `onConnect` and a server sync in `useEffect` causes a conflict:
+
+1. `onConnect` calls `setEdges(addEdge(params, eds))` — adds the new edge **with specific `sourceHandle`/`targetHandle`** (where the user dragged)
+2. The mutation invalidates the query; the `useEffect` runs and calls `setEdges(connections.map(connToEdge))` — rebuilds all edges **without handle info**
+3. ReactFlow re-routes every existing edge to default handles, visually snapping unrelated connections to wrong positions
+
+**Fix:** remove `setEdges` from `onConnect` and let the `useEffect` be the sole writer. The new edge appears after the server responds (fast in practice):
+
+```ts
+// ✅ onConnect only triggers the mutation — useEffect handles the state
+const onConnect = useCallback(
+  (params: Connection) => {
+    if (!params.source || !params.target) return
+    createConnection({
+      sourceDocumentId: Number(params.source),
+      targetDocumentId: Number(params.target),
+    })
+  },
+  [createConnection],
+)
+
+// Single source of truth for edges
+useEffect(() => {
+  setEdges(connections.map(connToEdge))
+}, [connections, setEdges])
+```
+
+### ReactFlow — use `useRef` to stabilize callbacks embedded in node data
+
+When a callback (e.g. `onDelete`) is embedded in a node's `data` object and also appears in a `useEffect` dependency array, any change to that callback causes `setNodes` to run and rebuild all nodes — which triggers ReactFlow to re-route all edges:
+
+```ts
+// ❌ deleteDocument in deps — rebuilds all nodes whenever the callback changes
+useEffect(() => {
+  setNodes(documents.map((d) => docToNode(d, deleteDocument)))
+}, [documents, deleteDocument, setNodes])
+
+// ✅ useRef holds the latest version without being a dependency
+const deleteDocumentRef = useRef(deleteDocument)
+deleteDocumentRef.current = deleteDocument
+
+useEffect(() => {
+  setNodes(documents.map((d) => docToNode(d, deleteDocumentRef.current)))
+}, [documents, setNodes])
+```
+
 ---
 
 ### JSX best practices

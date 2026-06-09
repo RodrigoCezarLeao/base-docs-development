@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import {
   useNodesState,
   useEdgesState,
-  addEdge,
   type Node,
   type Edge,
   type Connection,
@@ -60,9 +59,16 @@ export function useCanvas(projectId: number) {
     [deleteDocumentMutate, clearSelection],
   )
 
+  // Ref keeps the latest deleteDocument without being a useEffect dependency.
+  // Without this, every render that changes deleteDocument would rebuild all
+  // nodes via setNodes, which causes ReactFlow to re-route all existing edges.
+  const deleteDocumentRef = useRef(deleteDocument)
+  deleteDocumentRef.current = deleteDocument
+
   const initialNodes = useMemo(
-    () => documents.map((d) => docToNode(d, deleteDocument)),
-    [documents, deleteDocument],
+    () => documents.map((d) => docToNode(d, deleteDocumentRef.current)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [documents],
   )
 
   const initialEdges = useMemo(
@@ -73,12 +79,16 @@ export function useCanvas(projectId: number) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 
-  // Sync nodes when documents change (server state → ReactFlow state)
+  // Sync nodes when documents change (server state → ReactFlow state).
   useEffect(() => {
-    setNodes(documents.map((d) => docToNode(d, deleteDocument)))
-  }, [documents, deleteDocument, setNodes])
+    setNodes(documents.map((d) => docToNode(d, deleteDocumentRef.current)))
+  }, [documents, setNodes])
 
-  // Sync edges when connections change (server state → ReactFlow state)
+  // Sync edges when connections change (server state → ReactFlow state).
+  // Do NOT call setEdges inside onConnect — two competing sources of truth
+  // for edge state cause ReactFlow to re-route all existing edges on every
+  // new connection (the optimistic update uses handle IDs; the server sync
+  // does not, so they conflict and redraw unrelated connections).
   useEffect(() => {
     setEdges(connections.map(connToEdge))
   }, [connections, setEdges])
@@ -90,9 +100,13 @@ export function useCanvas(projectId: number) {
         sourceDocumentId: Number(params.source),
         targetDocumentId: Number(params.target),
       })
-      setEdges((eds) => addEdge(params, eds))
+      // Edge state is managed solely by the useEffect above.
+      // Adding it here too would create a conflict: the optimistic edge
+      // carries specific sourceHandle/targetHandle, but the server sync
+      // rebuilds all edges without handle info, causing unrelated connections
+      // to snap to different handles.
     },
-    [createConnection, setEdges],
+    [createConnection],
   )
 
   const onNodeDragStop: NodeDragHandler = useCallback(
