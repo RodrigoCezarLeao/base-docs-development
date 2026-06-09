@@ -1,0 +1,6 @@
+# pnpm 11+ reads project-wide settings from this file instead of the "pnpm" field in package.json.
+# onlyBuiltDependencies: allowlist of packages permitted to run install scripts.
+# All others are blocked by ignore-scripts=true in .npmrc.
+onlyBuiltDependencies:
+  - esbuild
+  - "@tailwindcss/oxide"

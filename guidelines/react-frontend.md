@@ -1552,8 +1552,8 @@ Every frontend project must include a `.npmrc` at the project root:
 registry=https://registry.npmjs.org/
 
 # Block all install scripts (postinstall, preinstall, prepare) by default.
-# Packages that require native binaries must be explicitly listed in package.json:
-#   "pnpm": { "onlyBuiltDependencies": ["esbuild", "@tailwindcss/oxide"] }
+# Packages that require native binaries must be explicitly listed in pnpm-workspace.yaml
+# under onlyBuiltDependencies (pnpm 11+). See the section below.
 ignore-scripts=true
 
 # Save exact versions when adding packages — no ^ or ~ ranges.
@@ -1581,18 +1581,21 @@ strict-peer-dependencies=false
 | `shamefully-hoist=false` | pnpm strict mode — no phantom dependencies via accidental hoisting |
 | `strict-peer-dependencies=false` | Avoids noisy warnings from packages with loose peer dep declarations |
 
-### Native packages allowlist (`package.json`)
+### Native packages allowlist (`pnpm-workspace.yaml`)
 
 `ignore-scripts=true` blocks all install scripts, including those needed by packages with native binaries. Without an allowlist, `esbuild` (used by Vite) and `@tailwindcss/oxide` (Tailwind v4's Rust engine) won't install their platform binaries and the project won't build.
 
-Explicitly allow only the packages that need it in `package.json`:
+**pnpm 11+ change:** `onlyBuiltDependencies` must be declared in `pnpm-workspace.yaml`, not in `package.json`. The `pnpm` field in `package.json` is no longer read by pnpm 11 — placing `onlyBuiltDependencies` there silently does nothing, and the build will fail with `[ERR_PNPM_IGNORED_BUILDS]`.
 
-```json
-{
-  "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "@tailwindcss/oxide"]
-  }
-}
+Create `pnpm-workspace.yaml` at the project root:
+
+```yaml
+# pnpm 11+ reads project-wide settings from this file instead of the "pnpm" field in package.json.
+# onlyBuiltDependencies: allowlist of packages permitted to run install scripts.
+# All others are blocked by ignore-scripts=true in .npmrc.
+onlyBuiltDependencies:
+  - esbuild
+  - "@tailwindcss/oxide"
 ```
 
 This is safer than `ignore-scripts=false` because the allowlist is auditable and committed to the repo — any addition to it is visible in code review.
@@ -1611,7 +1614,7 @@ Some common recommendations don't have a direct pnpm/npm client config equivalen
 - [ ] `"type": "module"` declared in `package.json`
 - [ ] `"types": ["vite/client"]` in `compilerOptions` of `tsconfig.json`
 - [ ] `.npmrc` created with registry pin, `ignore-scripts`, `save-exact`, `lockfile`, `shamefully-hoist=false`
-- [ ] `"pnpm": { "onlyBuiltDependencies": ["esbuild", "@tailwindcss/oxide"] }` in `package.json`
+- [ ] `pnpm-workspace.yaml` created at root with `onlyBuiltDependencies: [esbuild, "@tailwindcss/oxide"]` (pnpm 11+ — do NOT use the `pnpm` field in `package.json`)
 - [ ] `"engines": { "node": ">=18.0.0", "pnpm": ">=9.0.0" }` in `package.json`
 - [ ] All dependency versions exact (no `^` or `~`) in `package.json`
 - [ ] `src/lib/api.ts` created with `ApiInstance` + response interceptor (extracts `.data`)
