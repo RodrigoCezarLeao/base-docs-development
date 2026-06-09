@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import {
   useNodesState,
   useEdgesState,
@@ -73,13 +73,13 @@ export function useCanvas(projectId: number) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 
-  // Sync nodes when documents change
-  useMemo(() => {
+  // Sync nodes when documents change (server state → ReactFlow state)
+  useEffect(() => {
     setNodes(documents.map((d) => docToNode(d, deleteDocument)))
   }, [documents, deleteDocument, setNodes])
 
-  // Sync edges when connections change
-  useMemo(() => {
+  // Sync edges when connections change (server state → ReactFlow state)
+  useEffect(() => {
     setEdges(connections.map(connToEdge))
   }, [connections, setEdges])
 
