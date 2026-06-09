@@ -1179,6 +1179,77 @@ dotnet test -v normal              # verbose output
 
 ---
 
+## Security — NuGet
+
+Every backend project must include two files at the solution root to isolate package resolution and pin transitive dependencies.
+
+### `NuGet.Config`
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <!--
+      <clear /> removes ALL inherited sources — machine-level and user-level NuGet.Config
+      files are ignored. Corporate feeds on the developer's machine will not bleed in.
+    -->
+    <clear />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" protocolVersion="3" />
+  </packageSources>
+
+  <!--
+    Package Source Mapping (NuGet 6.0+) — maps every package pattern to nuget.org.
+    Second layer of defense against dependency confusion attacks.
+  -->
+  <packageSourceMapping>
+    <packageSource key="nuget.org">
+      <package pattern="*" />
+    </packageSource>
+  </packageSourceMapping>
+</configuration>
+```
+
+### `Directory.Build.props`
+
+```xml
+<Project>
+  <PropertyGroup>
+    <!--
+      Generates packages.lock.json — pins the exact resolved version of every
+      transitive dependency. Equivalent to pnpm-lock.yaml. Commit this file.
+
+      In CI, pass -p:RestoreLockedMode=true to dotnet restore/build to fail
+      if the lockfile is out of date (equivalent to pnpm --frozen-lockfile).
+    -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+</Project>
+```
+
+### What each file does
+
+| File | Effect |
+|---|---|
+| `NuGet.Config` with `<clear />` | Removes all inherited package sources — corporate or local feeds on the machine are ignored |
+| Package Source Mapping | Every package ID pattern is explicitly mapped to nuget.org; prevents ambiguous resolution |
+| `Directory.Build.props` | Generates `packages.lock.json` with the exact resolved version of every direct and transitive dependency |
+| `RestoreLockedMode=true` (CI flag) | Makes the build fail if the lockfile is stale — equivalent to `--frozen-lockfile` |
+
+### Compared to the frontend approach
+
+| Concern | Frontend (`.npmrc`) | Backend (`NuGet.Config`) |
+|---|---|---|
+| Registry isolation | `registry=https://registry.npmjs.org/` | `<clear />` + explicit source |
+| Prevent ambiguous resolution | — | Package Source Mapping |
+| Lockfile | `pnpm-lock.yaml` (always) | `packages.lock.json` (opt-in via `Directory.Build.props`) |
+| Strict CI restore | `pnpm install --frozen-lockfile` | `-p:RestoreLockedMode=true` |
+| Block install scripts | `ignore-scripts=true` | N/A — NuGet doesn't run install scripts |
+| Exact versions | `save-exact=true` | `.csproj` already uses exact versions by default |
+
+> **`dotnet nuget audit`** — run `dotnet nuget audit` to check all packages against the GitHub Advisory Database for known CVEs. Add it as a CI step alongside `dotnet build`.
+
+---
+
 ## Checklist for a new entity
 
 **Domain and Application**
@@ -1204,6 +1275,8 @@ dotnet test -v normal              # verbose output
 - [ ] `tests/.../Integration/HealthCheckTests.cs` — `/ping` and `/health`
 
 **Local infrastructure**
+- [ ] `NuGet.Config` at solution root with `<clear />`, nuget.org source, and package source mapping
+- [ ] `Directory.Build.props` at solution root with `RestorePackagesWithLockFile=true`
 - [ ] `docker-compose.yml` with PostgreSQL service (use a port other than 5432 if another project is running)
 - [ ] `Properties/launchSettings.json` with `ASPNETCORE_ENVIRONMENT=Development` and the correct port
 - [ ] `UseHttpsRedirection` guarded with `if (!app.Environment.IsDevelopment())`
