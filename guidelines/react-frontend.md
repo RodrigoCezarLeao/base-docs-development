@@ -1542,10 +1542,78 @@ export function UserCard({ user, onSelect, compact = false }: UserCardProps) {
 
 ---
 
+## Security — `.npmrc`
+
+Every frontend project must include a `.npmrc` at the project root:
+
+```ini
+# Always resolve from the public npm registry.
+# Prevents corporate or local registry configs from leaking into this project.
+registry=https://registry.npmjs.org/
+
+# Block all install scripts (postinstall, preinstall, prepare) by default.
+# Packages that require native binaries must be explicitly listed in package.json:
+#   "pnpm": { "onlyBuiltDependencies": ["esbuild", "@tailwindcss/oxide"] }
+ignore-scripts=true
+
+# Save exact versions when adding packages — no ^ or ~ ranges.
+save-exact=true
+
+# Always generate and respect the lockfile. Use --frozen-lockfile in CI.
+lockfile=true
+
+# Disable hoisting — each package only accesses its declared dependencies.
+# Prevents phantom dependency bugs and unintended cross-package access.
+shamefully-hoist=false
+
+# Silence peer dependency warnings that don't block runtime.
+strict-peer-dependencies=false
+```
+
+### What each setting does
+
+| Setting | Effect |
+|---|---|
+| `registry` | Pins to public npm; ignores corporate/local overrides on the developer's machine |
+| `ignore-scripts` | Blocks `postinstall`/`preinstall` — the main vector for supply chain attacks |
+| `save-exact` | `pnpm add X` saves `"X": "1.2.3"` instead of `"X": "^1.2.3"` |
+| `lockfile=true` | Always generates `pnpm-lock.yaml`; prevents silent resolution drift |
+| `shamefully-hoist=false` | pnpm strict mode — no phantom dependencies via accidental hoisting |
+| `strict-peer-dependencies=false` | Avoids noisy warnings from packages with loose peer dep declarations |
+
+### Native packages allowlist (`package.json`)
+
+`ignore-scripts=true` blocks all install scripts, including those needed by packages with native binaries. Without an allowlist, `esbuild` (used by Vite) and `@tailwindcss/oxide` (Tailwind v4's Rust engine) won't install their platform binaries and the project won't build.
+
+Explicitly allow only the packages that need it in `package.json`:
+
+```json
+{
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "@tailwindcss/oxide"]
+  }
+}
+```
+
+This is safer than `ignore-scripts=false` because the allowlist is auditable and committed to the repo — any addition to it is visible in code review.
+
+### What isn't supported as client config
+
+Some common recommendations don't have a direct pnpm/npm client config equivalent:
+
+- **`min-release-age=N`** — prevents packages published less than N days ago from being installed (guards against "protestware" and fast supply chain attacks). Valid security practice but requires a registry proxy (e.g., Verdaccio) — not supported by the pnpm client directly.
+- **`allow-git=none`** — prevents `git+https://` or `github:` URLs in `package.json`. Not a native config key; enforce via PR review or a pre-commit hook that rejects non-registry dependencies.
+
+---
+
 ## Checklist for a new project
 
 - [ ] `"type": "module"` declared in `package.json`
 - [ ] `"types": ["vite/client"]` in `compilerOptions` of `tsconfig.json`
+- [ ] `.npmrc` created with registry pin, `ignore-scripts`, `save-exact`, `lockfile`, `shamefully-hoist=false`
+- [ ] `"pnpm": { "onlyBuiltDependencies": ["esbuild", "@tailwindcss/oxide"] }` in `package.json`
+- [ ] `"engines": { "node": ">=18.0.0", "pnpm": ">=9.0.0" }` in `package.json`
+- [ ] All dependency versions exact (no `^` or `~`) in `package.json`
 - [ ] `src/lib/api.ts` created with `ApiInstance` + response interceptor (extracts `.data`)
 - [ ] If JWT is needed: request interceptor in `api.ts` reads token from Zustand store
 
