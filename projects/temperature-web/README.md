@@ -5,15 +5,15 @@ Frontend de referência — React 18 · TypeScript · Vite · React Query · Zus
 ## Requisitos
 
 - Node.js >= 18
-- npm >= 9
+- pnpm >= 9
 
 ## Início rápido
 
 ```bash
-npm install
-npm run dev       # http://localhost:5173
-npm run lint      # ESLint
-npm test          # Vitest
+pnpm install
+pnpm dev          # http://localhost:5173
+pnpm lint         # ESLint
+pnpm test         # Vitest
 ```
 
 A API backend deve estar rodando em `http://localhost:5000` (configurável em `.env.development`).

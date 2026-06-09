@@ -54,7 +54,7 @@ cd projects/temperature-web
 **1. Install dependencies**
 
 ```bash
-npm install
+pnpm install
 ```
 
 **2. Configure the environment**
@@ -68,7 +68,7 @@ The default value (`VITE_API_URL=http://localhost:5000`) works as-is if the API 
 **3. Start the dev server**
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 App available at `http://localhost:5173`.
@@ -76,7 +76,7 @@ App available at `http://localhost:5173`.
 **4. Run the tests**
 
 ```bash
-npm run test:run
+pnpm test:run
 ```
 
 ---
@@ -88,7 +88,7 @@ Open two terminals:
 | Terminal | Command |
 |----------|---------|
 | 1 | `cd projects/temperature-api && docker compose up -d && dotnet run --project src/TemperatureApi.Api` |
-| 2 | `cd projects/temperature-web && npm run dev` |
+| 2 | `cd projects/temperature-web && pnpm dev` |
 
 Then open `http://localhost:5173`.
 

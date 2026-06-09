@@ -676,7 +676,7 @@ it('calls onPageChange with page + 1 when next is clicked', async () => {
 ### Dependency
 
 ```bash
-npm install sonner
+pnpm add sonner
 ```
 
 ### `ErrorBoundary` — catches rendering errors
@@ -1575,5 +1575,5 @@ export function UserCard({ user, onSelect, compact = false }: UserCardProps) {
 - [ ] No direct store or API calls if in `ui/`
 - [ ] No inline logic in JSX — pre-compute before `return`
 - [ ] Appearance variants via `cn()` and class object, not `style={{}}`
-- [ ] `npm run lint` passes without errors before committing
-- [ ] `npm run test:run` passes without errors before committing
+- [ ] `pnpm lint` passes without errors before committing
+- [ ] `pnpm test:run` passes without errors before committing

@@ -93,8 +93,8 @@ dotnet run --project src/{Name}.Api
 dotnet test
 
 # Frontend (in projects/{name}-web/)
-npm install
+pnpm install
 cp .env.example .env.local    # edit with the API URL
-npm run dev
-npm run test:run
+pnpm dev
+pnpm test:run
 ```

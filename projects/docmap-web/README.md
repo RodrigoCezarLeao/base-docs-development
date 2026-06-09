@@ -12,7 +12,7 @@ Frontend for the DocMap visual documentation system. Built with React 18, TypeSc
 ### 1. Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Configure the API URL
@@ -26,7 +26,7 @@ VITE_API_URL=http://localhost:5172
 ### 3. Start the dev server
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Opens at `http://localhost:5174`.
@@ -35,14 +35,14 @@ Opens at `http://localhost:5174`.
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start dev server with HMR |
-| `npm run build` | Type-check and build for production |
-| `npm run preview` | Preview production build |
-| `npm run lint` | Lint with ESLint |
-| `npm run lint:fix` | Auto-fix lint errors |
-| `npm run test` | Run tests in watch mode |
-| `npm run test:run` | Run tests once (CI mode) |
-| `npm run test:coverage` | Generate coverage report |
+| `pnpm dev` | Start dev server with HMR |
+| `pnpm build` | Type-check and build for production |
+| `pnpm preview` | Preview production build |
+| `pnpm lint` | Lint with ESLint |
+| `pnpm lint:fix` | Auto-fix lint errors |
+| `pnpm test` | Run tests in watch mode |
+| `pnpm test:run` | Run tests once (CI mode) |
+| `pnpm test:coverage` | Generate coverage report |
 
 ## Project Structure
 
@@ -74,7 +74,7 @@ src/
 Tests use Vitest + Testing Library + jsdom.
 
 ```bash
-npm run test:run
+pnpm test:run
 ```
 
 **Key conventions:**
