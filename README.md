@@ -9,7 +9,7 @@ The `temperature-api` + `temperature-web` projects implement the full stack foll
 ### Prerequisites
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [Node.js 20+](https://nodejs.org/)
+- [Node.js 22.13+](https://nodejs.org/) — required by pnpm 11
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 ---
@@ -41,6 +41,20 @@ Swagger UI at `http://localhost:5000/swagger`.
 
 ```bash
 dotnet test
+```
+
+**To stop the database**
+
+```bash
+docker compose down
+```
+
+Stops and removes the container. Data is preserved in the Docker volume — `docker compose up -d` will resume from the same state next time.
+
+To also delete the data volume:
+
+```bash
+docker compose down -v
 ```
 
 ---
