@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
-import ReactFlow, { Background, Controls, MiniMap } from 'reactflow'
+import ReactFlow, { Background, Controls, ConnectionMode, MiniMap } from 'reactflow'
 import { useAuth } from '@/stores/auth/hooks'
 import { useProject } from '@/services/projects/queries'
 import { DocumentNode, DocumentSidePanel, CanvasToolbar, useCanvas } from '@/features/canvas'
@@ -52,6 +52,7 @@ export default function CanvasPage() {
           onNodeClick={onNodeClick}
           onNodeDragStop={onNodeDragStop}
           onEdgeClick={(_event, edge) => deleteConnection(edge.id)}
+          connectionMode={ConnectionMode.Loose}
           fitView
           className="w-full h-full"
         >

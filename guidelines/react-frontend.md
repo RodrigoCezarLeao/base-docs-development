@@ -255,6 +255,25 @@ const nodes = useMemo(
 
 ---
 
+### ReactFlow — `connectionMode="loose"` for free-form canvases
+
+ReactFlow handles have two types: `source` (starts connections) and `target` (receives connections). By default, the library only allows `source → target` connections — dragging from a `target` handle or dropping onto a `source` handle silently does nothing, which appears as connections only working on specific nodes.
+
+For document maps or any canvas where connections can go in any direction, add `connectionMode={ConnectionMode.Loose}` to the `<ReactFlow>` component. In loose mode every handle acts as both source and target:
+
+```tsx
+import ReactFlow, { ConnectionMode } from 'reactflow'
+
+<ReactFlow
+  connectionMode={ConnectionMode.Loose}
+  // ...other props
+>
+```
+
+Without this, users can only connect by dragging from the bottom/right handles of one node to the top/left handles of another — any other combination fails silently.
+
+---
+
 ### JSX best practices
 
 ```tsx
