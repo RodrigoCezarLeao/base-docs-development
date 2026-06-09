@@ -1587,6 +1587,8 @@ strict-peer-dependencies=false
 
 **pnpm 11+ change:** The `pnpm` field in `package.json` is no longer read by pnpm 11. The build approval mechanism also changed: `onlyBuiltDependencies` (list) was replaced by `allowBuilds` (map with `true/false`). Using the old form silently does nothing and `pnpm install` fails with `[ERR_PNPM_IGNORED_BUILDS]`.
 
+**Node.js requirement:** pnpm 11 requires Node.js >= 22.13. It uses the `node:sqlite` built-in module which only exists from Node 22.13 onwards. Running pnpm 11 under Node 18 or 20 crashes immediately with `ERR_UNKNOWN_BUILTIN_MODULE`. Use `node-version: 22` in CI and `"node": ">=22.13.0"` in `engines`.
+
 Create `pnpm-workspace.yaml` at the project root:
 
 ```yaml
@@ -1615,7 +1617,7 @@ Some common recommendations don't have a direct pnpm/npm client config equivalen
 - [ ] `"types": ["vite/client"]` in `compilerOptions` of `tsconfig.json`
 - [ ] `.npmrc` created with registry pin, `ignore-scripts`, `save-exact`, `lockfile`, `shamefully-hoist=false`
 - [ ] `pnpm-workspace.yaml` created at root with `allowBuilds: { esbuild: true, "@tailwindcss/oxide": true }` (pnpm 11+ — do NOT use `onlyBuiltDependencies` or the `pnpm` field in `package.json`)
-- [ ] `"engines": { "node": ">=18.0.0", "pnpm": ">=9.0.0" }` in `package.json`
+- [ ] `"engines": { "node": ">=22.13.0", "pnpm": ">=11.0.0" }` in `package.json` — pnpm 11 requires Node 22.13+ (uses `node:sqlite` built-in not available in older versions)
 - [ ] All dependency versions exact (no `^` or `~`) in `package.json`
 - [ ] `src/lib/api.ts` created with `ApiInstance` + response interceptor (extracts `.data`)
 - [ ] If JWT is needed: request interceptor in `api.ts` reads token from Zustand store

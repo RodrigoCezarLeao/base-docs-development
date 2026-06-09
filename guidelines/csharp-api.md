@@ -1215,11 +1215,14 @@ Every backend project must include two files at the solution root to isolate pac
 <Project>
   <PropertyGroup>
     <!--
-      Generates packages.lock.json — pins the exact resolved version of every
+      Generates packages.lock.json - pins the exact resolved version of every
       transitive dependency. Equivalent to pnpm-lock.yaml. Commit this file.
 
       In CI, pass -p:RestoreLockedMode=true to dotnet restore/build to fail
-      if the lockfile is out of date (equivalent to pnpm --frozen-lockfile).
+      if the lockfile is out of date (equivalent to pnpm frozen-lockfile).
+
+      NOTE: XML comments cannot contain double-dash sequences.
+      Write CLI flags as single words, not with their leading dashes.
     -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
