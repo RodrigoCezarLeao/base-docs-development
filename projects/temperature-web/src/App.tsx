@@ -13,7 +13,7 @@ export function App() {
         <HomePage />
       </ErrorBoundary>
       <Toaster position="bottom-right" richColors />
-      <ReactQueryDevtools initialIsOpen={false} />
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   )
 }

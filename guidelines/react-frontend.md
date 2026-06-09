@@ -831,13 +831,15 @@ export function App() {
         <HomePage />
       </ErrorBoundary>
       <Toaster position="bottom-right" richColors />
-      <ReactQueryDevtools initialIsOpen={false} />
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   )
 }
 ```
 
 `<Toaster>` is placed **outside** the `<ErrorBoundary>` so it continues working even if the page crashes.
+
+`<ReactQueryDevtools>` is wrapped in `import.meta.env.DEV` so it only renders during development (`pnpm dev`). Without this guard, the devtools button floats visibly in any environment — Vite removes the entire block from production builds when the condition is false.
 
 ### Toasts in mutations
 

@@ -12,7 +12,7 @@ export default function App() {
       <Suspense fallback={<div>Loading...</div>}>
         <Router />
       </Suspense>
-      <ReactQueryDevtools />
+      {import.meta.env.DEV && <ReactQueryDevtools />}
     </QueryClientProvider>
   )
 }
