@@ -166,6 +166,69 @@ features/{x}/
 | Type file | `camelCase` — `types.ts` |
 | Feature folder | `kebab-case` — `user-profile/` |
 
+### Responsive design: Tailwind breakpoints vs structural separation
+
+The right approach depends on *how different* the mobile and desktop experiences are.
+
+**Use Tailwind breakpoints** when the difference is layout or spacing only — same component, different arrangement:
+
+```tsx
+// ✅ Tailwind breakpoints — one component, responsive layout
+export function UserCard({ user }: UserCardProps) {
+  return (
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+      <Avatar src={user.avatar} />
+      <div>
+        <p className="text-sm font-semibold">{user.name}</p>
+        <p className="text-xs text-gray-500 hidden sm:block">{user.email}</p>
+      </div>
+    </div>
+  )
+}
+```
+
+**Use structural separation** (`desktop/` and `mobile/` subfolders) when the component has fundamentally different JSX or interaction patterns between screen sizes — for example, a sidebar on desktop and a bottom sheet on mobile:
+
+```
+features/navigation/
+  components/
+    desktop/
+      Sidebar.tsx          → fixed left panel with full labels
+      Sidebar.test.tsx
+    mobile/
+      BottomSheet.tsx      → swipeable sheet with icon-only tabs
+      BottomSheet.test.tsx
+    index.tsx              → picks the right one based on screen size
+```
+
+```tsx
+// features/navigation/components/index.tsx
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { Sidebar } from './desktop/Sidebar'
+import { BottomSheet } from './mobile/BottomSheet'
+
+export function Navigation() {
+  const isDesktop = useMediaQuery('(min-width: 768px)')
+  return isDesktop ? <Sidebar /> : <BottomSheet />
+}
+```
+
+Shared logic (data fetching, state) lives in a hook extracted to `features/navigation/hooks/` and used by both components — no duplication.
+
+**Decision guide:**
+
+| Situation | Approach |
+|---|---|
+| Different padding, font sizes, column count | Tailwind breakpoints |
+| Elements hidden/shown per breakpoint | Tailwind `hidden sm:block` |
+| Completely different layout structure | Tailwind breakpoints (usually still enough) |
+| Different interaction pattern (sidebar vs bottom sheet, table vs cards) | `desktop/` + `mobile/` separation |
+| Different navigation flow per platform | `desktop/` + `mobile/` separation |
+
+Avoid putting `isMobile ? <BigBlockA /> : <BigBlockB />` inline in a component — extract the condition to an `index.tsx` dispatcher (as shown above) so each variant stays focused.
+
+---
+
 ### JSX best practices
 
 ```tsx
@@ -1631,6 +1694,7 @@ Some common recommendations don't have a direct pnpm/npm client config equivalen
 - [ ] Mutations in `services/{feature}/actions.ts`
 - [ ] If global state is needed: store in `stores/{feature}/` with the 4 files
 - [ ] Components with at most 100 lines — separate logic into hooks and JSX into subcomponents
+- [ ] If the component has different interaction patterns per screen size: use `desktop/` + `mobile/` subfolders with an `index.tsx` dispatcher; if it's only layout/spacing differences, use Tailwind breakpoints
 - [ ] Styling via Tailwind classes — no inline `style={{}}` except for dynamically computed JS values
 - [ ] Conditional classes using `cn()` from `@/lib/cn`
 - [ ] User-visible text using `t()` from i18n
