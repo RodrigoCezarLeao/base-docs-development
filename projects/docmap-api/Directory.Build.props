@@ -5,8 +5,8 @@
       This file pins the exact resolved version of every transitive dependency,
       equivalent to pnpm-lock.yaml. Commit it to the repository.
 
-      In CI, add -p:RestoreLockedMode=true to dotnet restore/build to make the
-      build fail if the lockfile is out of date (equivalent to pnpm --frozen-lockfile).
+      In CI, add -p:RestoreLockedMode=true to dotnet restore/build to enforce
+      the lockfile (equivalent to pnpm install with frozen-lockfile).
     -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
