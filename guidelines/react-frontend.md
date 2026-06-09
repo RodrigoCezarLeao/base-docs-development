@@ -1,30 +1,30 @@
-# Guideline — Frontend React com TypeScript, Vite, React Query, Zustand, Tailwind e i18n
+# Guideline — React Frontend with TypeScript, Vite, React Query, Zustand, Tailwind, and i18n
 
-## Propósito
+## Purpose
 
-Este documento define o padrão de organização e desenvolvimento para frontends React. O objetivo é garantir componentes compactos, stores organizadas, queries previsíveis, helpers testados e uma estrutura de pastas que qualquer desenvolvedor consiga navegar sem explicação.
+This document defines the organization and development standard for React frontends. The goal is to ensure compact components, organized stores, predictable queries, tested helpers, and a folder structure any developer can navigate without explanation.
 
 ---
 
 ## Stack
 
-| Lib | Versão mínima | Papel |
+| Lib | Min version | Role |
 |---|---|---|
 | React | 18 | UI |
-| TypeScript | 5 | Tipagem estática |
-| Vite | 5 | Build e dev server |
-| TanStack Query (React Query) | 5 | Estado servidor (fetch, cache, mutations) |
-| Zustand | 4 | Estado cliente (UI state, sessão, preferências) |
-| i18next + react-i18next | 23 | Internacionalização |
-| Tailwind CSS | 4 | Estilização utility-first |
+| TypeScript | 5 | Static typing |
+| Vite | 5 | Build and dev server |
+| TanStack Query (React Query) | 5 | Server state (fetch, cache, mutations) |
+| Zustand | 4 | Client state (UI state, session, preferences) |
+| i18next + react-i18next | 23 | Internationalization |
+| Tailwind CSS | 4 | Utility-first styling |
 | ESLint | 9 | Linter (flat config) |
-| Vitest + Testing Library | 2.x | Testes unitários |
-| `@vitest/coverage-v8` | 2.x | Cobertura de código |
+| Vitest + Testing Library | 2.x | Unit tests |
+| `@vitest/coverage-v8` | 2.x | Code coverage |
 | axios | 1.x | HTTP client |
 
-### Requisitos obrigatórios de configuração
+### Required configuration
 
-**`package.json`** — declare `"type": "module"`. Sem isso, pacotes ESM como `@tailwindcss/vite` falham com erro de módulo CommonJS:
+**`package.json`** — declare `"type": "module"`. Without it, ESM packages like `@tailwindcss/vite` fail with a CommonJS module error:
 
 ```json
 {
@@ -32,7 +32,7 @@ Este documento define o padrão de organização e desenvolvimento para frontend
 }
 ```
 
-**`tsconfig.json`** — declare `"types": ["vite/client"]` em `compilerOptions`. Sem isso, `import.meta.env` não tem tipo e o TypeScript acusa erro:
+**`tsconfig.json`** — declare `"types": ["vite/client"]` in `compilerOptions`. Without it, `import.meta.env` has no type and TypeScript reports an error:
 
 ```json
 {
@@ -44,52 +44,52 @@ Este documento define o padrão de organização e desenvolvimento para frontend
 
 ---
 
-## Estrutura de Pastas
+## Folder Structure
 
 ```
 src/
-├── assets/                    → imagens, fontes, ícones estáticos
+├── assets/                    → static images, fonts, icons
 ├── components/
-│   ├── ui/                    → componentes base sem lógica de negócio (Button, Input, Modal, Badge)
-│   └── shared/                → componentes reutilizáveis com alguma lógica (UserAvatar, StatusTag)
+│   ├── ui/                    → base components without business logic (Button, Input, Modal, Badge)
+│   └── shared/                → reusable components with some logic (UserAvatar, StatusTag)
 ├── features/
 │   └── {feature}/
-│       ├── components/        → componentes exclusivos desta feature
-│       ├── hooks/             → hooks locais desta feature
-│       └── index.ts           → exports públicos da feature
-├── hooks/                     → hooks globais reutilizáveis (useDebounce, useLocalStorage)
+│       ├── components/        → components exclusive to this feature
+│       ├── hooks/             → local hooks for this feature
+│       └── index.ts           → public feature exports
+├── hooks/                     → global reusable hooks (useDebounce, useLocalStorage)
 ├── i18n/
 │   ├── locales/
 │   │   ├── pt-BR/
 │   │   │   └── translation.json
 │   │   └── en/
 │   │       └── translation.json
-│   └── index.ts               → configuração do i18next
+│   └── index.ts               → i18next configuration
 ├── lib/
-│   ├── api.ts                 → instância axios tipada (ApiInstance) + interceptor de resposta
-│   ├── queryClient.ts         → instância e configuração global do QueryClient
-│   └── cn.ts                  → helper para merge de classes Tailwind (clsx + tailwind-merge)
+│   ├── api.ts                 → typed axios instance (ApiInstance) + response interceptor
+│   ├── queryClient.ts         → global QueryClient instance and configuration
+│   └── cn.ts                  → helper for merging Tailwind classes (clsx + tailwind-merge)
 ├── services/
-│   └── {dominio}/
-│       ├── types.ts           → tipos de request/response da API
-│       ├── keys.ts            → queryKeys do domínio
-│       ├── queries.ts         → hooks useQuery (leitura)
-│       └── actions.ts         → hooks useMutation (escrita)
+│   └── {domain}/
+│       ├── types.ts           → API request/response types
+│       ├── keys.ts            → domain queryKeys
+│       ├── queries.ts         → useQuery hooks (read)
+│       └── actions.ts         → useMutation hooks (write)
 ├── stores/
-│   └── {dominio}/
-│       ├── types.ts           → interfaces do estado e das actions
-│       ├── store.ts           → createStore com estado + actions
-│       ├── selectors.ts       → funções seletoras puras
-│       └── hooks.ts           → hooks públicos com shallow
+│   └── {domain}/
+│       ├── types.ts           → state and actions interfaces
+│       ├── store.ts           → createStore with state + actions
+│       ├── selectors.ts       → pure selector functions
+│       └── hooks.ts           → public hooks with shallow
 ├── helpers/
-│   ├── format.ts              → formatação de datas, moeda, strings
+│   ├── format.ts              → date, currency, string formatting
 │   ├── format.test.ts
-│   ├── validators.ts          → validações puras
+│   ├── validators.ts          → pure validators
 │   └── validators.test.ts
 ├── types/
-│   └── index.ts               → tipos globais compartilhados
+│   └── index.ts               → shared global types
 ├── pages/
-│   └── {pagina}/
+│   └── {page}/
 │       └── index.tsx
 ├── router/
 │   └── index.tsx
@@ -97,37 +97,37 @@ src/
 └── main.tsx
 ```
 
-**Regras de organização:**
-- Tudo que pertence a uma única feature vive em `features/{feature}/`
-- Tudo que é usado por duas ou mais features sobe para `components/shared/` ou `hooks/`
-- Nunca importar de dentro de outra feature diretamente — use o `index.ts` dela
+**Organization rules:**
+- Everything belonging to a single feature lives in `features/{feature}/`
+- Everything used by two or more features moves up to `components/shared/` or `hooks/`
+- Never import directly from inside another feature — use its `index.ts`
 
 ---
 
-## Componentes
+## Components
 
-### Regra dos 100 linhas
+### 100-line rule
 
-Um componente não deve ultrapassar **100 linhas**. Quando isso acontece, é sinal de que ele está fazendo coisas demais.
+A component should not exceed **100 lines**. When it does, it's a sign it's doing too much.
 
-Estratégias de separação:
-1. **Lógica complexa** → extrair para um custom hook `useNomeDoComponente`
-2. **Bloco de JSX repetido ou grande** → extrair para um subcomponente
-3. **Formulário longo** → separar em seções de formulário
+Separation strategies:
+1. **Complex logic** → extract to a custom hook `useComponentName`
+2. **Repeated or large JSX blocks** → extract to a subcomponent
+3. **Long forms** → split into form sections
 
 ```tsx
-// ❌ Componente fazendo tudo (200+ linhas)
+// ❌ Component doing everything (200+ lines)
 export function UserProfile() {
   const [tab, setTab] = useState('info')
-  // 20 linhas de lógica...
+  // 20 lines of logic...
   return (
     <div>
-      {/* 80 linhas de JSX */}
+      {/* 80 lines of JSX */}
     </div>
   )
 }
 
-// ✅ Componente orquestrador compacto
+// ✅ Compact orchestrator component
 export function UserProfile() {
   const { tab, setTab, user, isLoading } = useUserProfile()
 
@@ -143,40 +143,40 @@ export function UserProfile() {
 }
 ```
 
-### Separação: ui vs shared vs feature
+### Separation: ui vs shared vs feature
 
 ```
 components/ui/       → Button, Input, Select, Modal, Spinner, Badge
-                        Sem chamada de API. Sem store. Props simples.
+                        No API calls. No store. Simple props.
 
 components/shared/   → UserAvatar, StatusBadge, PageHeader, ConfirmDialog
-                        Pode usar i18n e tipos de domínio. Sem chamada de API.
+                        Can use i18n and domain types. No API calls.
 
 features/{x}/
   components/        → OrderCard, OrderFilters, OrderEmptyState
-                        Pode usar queries e stores. Exclusivo da feature.
+                        Can use queries and stores. Feature-exclusive.
 ```
 
-### Nomenclatura
+### Naming
 
-| Artefato | Padrão |
+| Artifact | Pattern |
 |---|---|
-| Componente | `PascalCase` — `UserCard.tsx` |
-| Hook | `camelCase` com prefixo `use` — `useUserProfile.ts` |
-| Arquivo de tipo | `camelCase` — `types.ts` |
-| Pasta de feature | `kebab-case` — `user-profile/` |
+| Component | `PascalCase` — `UserCard.tsx` |
+| Hook | `camelCase` with `use` prefix — `useUserProfile.ts` |
+| Type file | `camelCase` — `types.ts` |
+| Feature folder | `kebab-case` — `user-profile/` |
 
-### Boas práticas de JSX
+### JSX best practices
 
 ```tsx
-// ❌ Lógica inline no JSX
+// ❌ Inline logic in JSX
 <div>
   {items.filter(i => i.active).sort((a, b) => a.name.localeCompare(b.name)).map(item => (
     <div key={item.id}>{item.name}</div>
   ))}
 </div>
 
-// ✅ Lógica fora do JSX, JSX limpo
+// ✅ Logic outside JSX, clean JSX
 const activeItems = items.filter(i => i.active).sort((a, b) => a.name.localeCompare(b.name))
 
 return (
@@ -190,9 +190,9 @@ return (
 
 ## Zustand
 
-### Organização por domínio
+### Domain-based organization
 
-Cada domínio de estado tem sua própria pasta com 4 arquivos:
+Each state domain has its own folder with 4 files:
 
 ```
 stores/
@@ -203,7 +203,7 @@ stores/
     └── hooks.ts
 ```
 
-#### `types.ts` — interfaces separadas para estado e actions
+#### `types.ts` — separate interfaces for state and actions
 
 ```typescript
 // stores/auth/types.ts
@@ -223,7 +223,7 @@ export interface AuthActions {
 export type AuthStore = AuthState & AuthActions
 ```
 
-#### `store.ts` — apenas criação do store
+#### `store.ts` — store creation only
 
 ```typescript
 // stores/auth/store.ts
@@ -247,7 +247,7 @@ export const useAuthStore = create<AuthStore>()(
 )
 ```
 
-#### `selectors.ts` — funções puras, sem acoplamento ao store
+#### `selectors.ts` — pure functions, no store coupling
 
 ```typescript
 // stores/auth/selectors.ts
@@ -259,9 +259,9 @@ export const selectToken = (state: AuthState) => state.token
 export const selectUserRole = (state: AuthState) => state.user?.role ?? null
 ```
 
-#### `hooks.ts` — único ponto de acesso com `useShallow`
+#### `hooks.ts` — single access point with `useShallow`
 
-`useShallow` evita re-renders desnecessários quando se seleciona múltiplos valores.
+`useShallow` prevents unnecessary re-renders when selecting multiple values.
 
 ```typescript
 // stores/auth/hooks.ts
@@ -269,7 +269,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { useAuthStore } from './store'
 import { selectUser, selectIsAuthenticated, selectUserRole } from './selectors'
 
-// Hook para dados do usuário — re-renderiza só quando user ou isAuthenticated mudar
+// Hook for user data — re-renders only when user or isAuthenticated changes
 export function useAuth() {
   return useAuthStore(
     useShallow((state) => ({
@@ -280,12 +280,12 @@ export function useAuth() {
   )
 }
 
-// Hook para um único valor — useShallow não é necessário (valor primitivo)
+// Hook for a single value — useShallow not needed (primitive value)
 export function useUserRole() {
   return useAuthStore(selectUserRole)
 }
 
-// Hook para actions puras — stable references, sem re-render
+// Hook for pure actions — stable references, no re-render
 export function useAuthActions() {
   return useAuthStore(
     useShallow((state) => ({
@@ -297,48 +297,48 @@ export function useAuthActions() {
 }
 ```
 
-**Nos componentes, sempre importar pelo hook — nunca o store diretamente:**
+**In components, always import via the hook — never the store directly:**
 
 ```tsx
-// ❌ Acesso direto ao store no componente
+// ❌ Direct store access in the component
 import { useAuthStore } from '@/stores/auth/store'
 const user = useAuthStore((state) => state.user)
 
-// ✅ Acesso pelo hook publicado
+// ✅ Access via the published hook
 import { useAuth } from '@/stores/auth/hooks'
 const { user } = useAuth()
 ```
 
-### O que colocar (e não colocar) no Zustand
+### What to (and not to) put in Zustand
 
 ```
-✅ Colocar no Zustand:
-  - Sessão do usuário (user, token, role)
-  - Preferências de UI (tema, idioma, sidebar aberta/fechada)
-  - Estado de seleção global (filtros ativos, item selecionado numa lista)
-  - Carrinho, wizard multi-step, estado de onboarding
+✅ Put in Zustand:
+  - User session (user, token, role)
+  - UI preferences (theme, language, sidebar open/closed)
+  - Global selection state (active filters, selected item in a list)
+  - Cart, multi-step wizard, onboarding state
 
-❌ Não colocar no Zustand:
-  - Dados que vêm da API → use React Query
-  - Estado local de um componente → use useState
-  - Estado de formulário → use react-hook-form ou useState
-  - Cache de requisições → use React Query
+❌ Do not put in Zustand:
+  - Data from the API → use React Query
+  - Local component state → use useState
+  - Form state → use react-hook-form or useState
+  - Request cache → use React Query
 ```
 
 ---
 
 ## API Client (Axios)
 
-Toda comunicação com o backend passa por uma instância axios centralizada em `src/lib/api.ts`.
+All backend communication goes through a centralized axios instance in `src/lib/api.ts`.
 
-O interceptor de resposta extrai `.data` de cada `AxiosResponse` automaticamente. Para que o TypeScript entenda isso sem que cada serviço precise de cast, o objeto exportado é tipado com `ApiInstance` — um tipo que declara os métodos retornando `Promise<T>` diretamente:
+The response interceptor automatically extracts `.data` from each `AxiosResponse`. For TypeScript to understand this without requiring casts in every service, the exported object is typed with `ApiInstance` — a type that declares the methods returning `Promise<T>` directly:
 
 ```typescript
 // src/lib/api.ts
 import axios from 'axios'
 
-// Informa ao TypeScript que o interceptor já extraiu .data —
-// os serviços recebem T diretamente, sem AxiosResponse<T>.
+// Tells TypeScript the interceptor already extracted .data —
+// services receive T directly, without AxiosResponse<T>.
 type ApiInstance = {
   get<T>(url: string, config?: object): Promise<T>
   post<T>(url: string, data?: unknown, config?: object): Promise<T>
@@ -360,17 +360,17 @@ axiosInstance.interceptors.response.use(
 export const api = axiosInstance as unknown as ApiInstance
 ```
 
-Com isso, os serviços chamam `api.get<T>()` e recebem `Promise<T>` — sem nenhum cast:
+With this, services call `api.get<T>()` and receive `Promise<T>` — with no casts:
 
 ```typescript
-// ✅ Sem cast — api.get<ApiResponse<Order>> retorna Promise<ApiResponse<Order>>
+// ✅ No cast — api.get<ApiResponse<Order>> returns Promise<ApiResponse<Order>>
 const order = await api.get<ApiResponse<Order>>('/orders/1')
 
-// ❌ Sem ApiInstance — TypeScript acusaria erro de tipo
-const order = await axiosInstance.get<ApiResponse<Order>>('/orders/1') // AxiosResponse<...>, não ApiResponse<...>
+// ❌ Without ApiInstance — TypeScript would report a type error
+const order = await axiosInstance.get<ApiResponse<Order>>('/orders/1') // AxiosResponse<...>, not ApiResponse<...>
 ```
 
-Se a API exigir autenticação via JWT, adicione o interceptor de request antes do de response:
+If the API requires JWT authentication, add the request interceptor before the response interceptor:
 
 ```typescript
 axiosInstance.interceptors.request.use((config) => {
@@ -384,15 +384,15 @@ axiosInstance.interceptors.request.use((config) => {
 
 ## React Query
 
-### Organização por domínio
+### Domain-based organization
 
 ```
 services/
 └── orders/
-    ├── types.ts       → tipos de domínio (Order, CreateOrderDto, OrderFilters)
+    ├── types.ts       → domain types (Order, CreateOrderDto, OrderFilters)
     ├── keys.ts        → queryKeys factory
-    ├── queries.ts     → hooks de leitura (useQuery, useInfiniteQuery)
-    └── actions.ts     → hooks de escrita (useMutation)
+    ├── queries.ts     → read hooks (useQuery, useInfiniteQuery)
+    └── actions.ts     → write hooks (useMutation)
 ```
 
 #### `types.ts`
@@ -427,7 +427,7 @@ export interface PagedOrders {
 }
 ```
 
-#### `keys.ts` — queryKeys como factory para invalidação precisa
+#### `keys.ts` — queryKeys as factory for precise invalidation
 
 ```typescript
 // services/orders/keys.ts
@@ -481,7 +481,7 @@ export function useCreateOrder() {
   return useMutation({
     mutationFn: (dto: CreateOrderDto) => api.post<Order>('/orders', dto),
     onSuccess: () => {
-      // Invalida todas as listas de orders
+      // Invalidates all order lists
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() })
     },
   })
@@ -500,7 +500,7 @@ export function useDeleteOrder() {
 }
 ```
 
-### Configuração do QueryClient
+### QueryClient Configuration
 
 ```typescript
 // lib/queryClient.ts
@@ -509,7 +509,7 @@ import { QueryClient } from '@tanstack/react-query'
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,   // 5 minutos
+      staleTime: 1000 * 60 * 5,   // 5 minutes
       retry: 1,
       refetchOnWindowFocus: false,
     },
@@ -519,11 +519,11 @@ export const queryClient = new QueryClient({
 
 ---
 
-## Paginação
+## Pagination
 
-O backend retorna `ApiResponse<PagedResponse<T>>` com `items`, `totalCount`, `page`, `pageSize`, `totalPages`, `hasNextPage` e `hasPreviousPage`. O frontend usa dois blocos reutilizáveis: o hook `usePagination` para estado e o componente `<Pagination>` para a UI.
+The backend returns `ApiResponse<PagedResponse<T>>` with `items`, `totalCount`, `page`, `pageSize`, `totalPages`, `hasNextPage`, and `hasPreviousPage`. The frontend uses two reusable building blocks: the `usePagination` hook for state and the `<Pagination>` component for the UI.
 
-### `usePagination` — hook de estado
+### `usePagination` — state hook
 
 ```typescript
 // hooks/usePagination.ts
@@ -546,7 +546,7 @@ export function usePagination({ initialPage = 1, pageSize = 10 }: UsePaginationO
 }
 ```
 
-### `<Pagination>` — componente de UI
+### `<Pagination>` — UI component
 
 ```typescript
 // components/ui/Pagination.tsx
@@ -562,7 +562,7 @@ export function Pagination({ page, totalPages, onPageChange }: PaginationProps) 
   if (totalPages <= 1) return null
 
   return (
-    <nav aria-label="Paginação" className="flex items-center justify-center gap-2 mt-6">
+    <nav aria-label="Pagination" className="flex items-center justify-center gap-2 mt-6">
       <Button variant="secondary" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
         ←
       </Button>
@@ -577,7 +577,7 @@ export function Pagination({ page, totalPages, onPageChange }: PaginationProps) 
 }
 ```
 
-### Como usar nos hooks de feature
+### How to use in feature hooks
 
 ```typescript
 // features/orders/hooks/useOrderList.ts
@@ -605,7 +605,7 @@ import { Pagination } from '@/components/ui/Pagination'
 
 export function OrderList({ orders, page, totalPages, onPageChange, isLoading, isError }) {
   if (isLoading) return <Spinner />
-  if (isError)   return <p>Erro ao carregar.</p>
+  if (isError)   return <p>Failed to load.</p>
 
   return (
     <div>
@@ -616,9 +616,9 @@ export function OrderList({ orders, page, totalPages, onPageChange, isLoading, i
 }
 ```
 
-### Testes
+### Tests
 
-Teste o hook com `renderHook` e o componente diretamente (sem necessidade de QueryClientProvider):
+Test the hook with `renderHook` and the component directly (no need for QueryClientProvider):
 
 ```typescript
 // hooks/usePagination.test.ts
@@ -667,19 +667,19 @@ it('calls onPageChange with page + 1 when next is clicked', async () => {
 
 ---
 
-## Error Boundary e Toast
+## Error Boundary and Toast
 
-### Por que os dois juntos
+### Why both together
 
-`ErrorBoundary` captura erros de renderização (crashes de componente) e exibe um fallback controlado no lugar do crash. Toast notifica o usuário sobre falhas em operações assíncronas (chamadas de API), que o `ErrorBoundary` não captura porque ocorrem fora do ciclo de render do React.
+`ErrorBoundary` catches rendering errors (component crashes) and displays a controlled fallback in place of the crash. Toast notifies the user about async operation failures (API calls), which `ErrorBoundary` does not catch because they occur outside React's render cycle.
 
-### Dependência
+### Dependency
 
 ```bash
 npm install sonner
 ```
 
-### `ErrorBoundary` — captura erros de renderização
+### `ErrorBoundary` — catches rendering errors
 
 ```tsx
 // components/ui/ErrorBoundary.tsx
@@ -710,13 +710,13 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         this.props.fallback ?? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-lg font-semibold text-gray-800">Algo deu errado.</p>
-            <p className="mt-1 text-sm text-gray-500">Recarregue a página para tentar novamente.</p>
+            <p className="text-lg font-semibold text-gray-800">Something went wrong.</p>
+            <p className="mt-1 text-sm text-gray-500">Reload the page to try again.</p>
             <button
               className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
               onClick={() => this.setState({ hasError: false })}
             >
-              Tentar novamente
+              Try again
             </button>
           </div>
         )
@@ -728,7 +728,7 @@ export class ErrorBoundary extends Component<Props, State> {
 }
 ```
 
-### Registrar `<Toaster>` e `<ErrorBoundary>` em `App.tsx`
+### Register `<Toaster>` and `<ErrorBoundary>` in `App.tsx`
 
 ```tsx
 // App.tsx
@@ -748,11 +748,11 @@ export function App() {
 }
 ```
 
-`<Toaster>` fica **fora** do `<ErrorBoundary>` para continuar funcionando mesmo se a página crashar.
+`<Toaster>` is placed **outside** the `<ErrorBoundary>` so it continues working even if the page crashes.
 
-### Toasts nas mutations
+### Toasts in mutations
 
-Use `toast` do sonner diretamente nos callbacks `onSuccess`/`onError` das mutations. A função `toast` funciona fora de componentes React, tornando-a ideal para esse uso.
+Use `toast` from sonner directly in mutation `onSuccess`/`onError` callbacks. The `toast` function works outside React components, making it ideal for this use.
 
 ```typescript
 // services/orders/actions.ts
@@ -765,18 +765,18 @@ export function useCreateOrder() {
     mutationFn: (dto: CreateOrderDto) => api.post<Order>('/orders', dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() })
-      toast.success('Pedido criado com sucesso.')
+      toast.success('Order created successfully.')
     },
     onError: () => {
-      toast.error('Erro ao criar pedido.')
+      toast.error('Failed to create order.')
     },
   })
 }
 ```
 
-> **Quando mover o toast para o call site?** Se a mesma mutation é usada em contextos diferentes com mensagens distintas, passe as mensagens como opção ou chame `toast` no `onSuccess` do `useMutation` no componente. Para o caso comum (uma mutation, uma mensagem), manter no `actions.ts` é mais simples.
+> **When to move the toast to the call site?** If the same mutation is used in different contexts with different messages, pass the messages as an option or call `toast` in the component's `useMutation` `onSuccess`. For the common case (one mutation, one message), keeping it in `actions.ts` is simpler.
 
-### Testes do `ErrorBoundary`
+### `ErrorBoundary` tests
 
 ```tsx
 function Bomb({ explode }: { explode: boolean }) {
@@ -793,11 +793,11 @@ it('renders default fallback when a child throws', () => {
     </ErrorBoundary>,
   )
 
-  expect(screen.getByText('Algo deu errado.')).toBeInTheDocument()
+  expect(screen.getByText('Something went wrong.')).toBeInTheDocument()
   consoleError.mockRestore()
 })
 
-it('recovers when "Tentar novamente" is clicked', async () => {
+it('recovers when "Try again" is clicked', async () => {
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 
   const { rerender } = render(
@@ -806,15 +806,15 @@ it('recovers when "Tentar novamente" is clicked', async () => {
     </ErrorBoundary>,
   )
 
-  // Atualiza o filho antes de limpar o estado; caso contrário o reset
-  // causa um novo throw e a boundary volta ao estado de erro imediatamente.
+  // Update the child before clearing state; otherwise the reset
+  // causes a new throw and the boundary immediately returns to error state.
   rerender(
     <ErrorBoundary>
       <Bomb explode={false} />
     </ErrorBoundary>,
   )
 
-  await userEvent.click(screen.getByText('Tentar novamente'))
+  await userEvent.click(screen.getByText('Try again'))
   expect(screen.getByText('ok')).toBeInTheDocument()
   consoleError.mockRestore()
 })
@@ -824,7 +824,7 @@ it('recovers when "Tentar novamente" is clicked', async () => {
 
 ## i18n
 
-### Estrutura de arquivos
+### File structure
 
 ```
 i18n/
@@ -836,7 +836,7 @@ i18n/
 └── index.ts
 ```
 
-Separe as traduções por namespace dentro do JSON para facilitar manutenção:
+Separate translations by namespace inside the JSON for easier maintenance:
 
 ```json
 // i18n/locales/pt-BR/translation.json
@@ -878,7 +878,7 @@ export default i18n
 ```
 
 ```tsx
-// Uso no componente
+// Usage in component
 import { useTranslation } from 'react-i18next'
 
 export function OrdersPage() {
@@ -892,7 +892,7 @@ export function OrdersPage() {
 
 ## Helpers
 
-Funções utilitárias puras que não dependem de React, store ou API. Toda helper deve ter arquivo de teste correspondente.
+Pure utility functions that don't depend on React, store, or API. Every helper must have a corresponding test file.
 
 ```
 helpers/
@@ -932,10 +932,10 @@ import { formatCurrency, formatInitials, truncate } from './format'
 
 describe('formatCurrency', () => {
   it('formats BRL correctly', () => {
-    expect(formatCurrency(1500)).toBe('R$ 1.500,00')
+    expect(formatCurrency(1500)).toBe('R$ 1.500,00')
   })
   it('handles zero', () => {
-    expect(formatCurrency(0)).toBe('R$ 0,00')
+    expect(formatCurrency(0)).toBe('R$ 0,00')
   })
 })
 
@@ -958,27 +958,27 @@ describe('truncate', () => {
 })
 ```
 
-**Regras:**
-- Helpers são funções puras: mesmo input → mesmo output, sem efeitos colaterais
-- Nenhuma helper sem teste
-- Nenhuma lógica de negócio em helper — helpers são utilitários genéricos
+**Rules:**
+- Helpers are pure functions: same input → same output, no side effects
+- No helper without a test
+- No business logic in helpers — helpers are generic utilities
 
 ---
 
-## Testes
+## Tests
 
 ### Stack
 
-| Pacote | Papel |
+| Package | Role |
 |---|---|
 | `vitest` | Test runner, assertions, mocks (`vi`) |
-| `@testing-library/react` | Renderização e queries de componentes |
-| `@testing-library/user-event` | Simulação de interações reais do usuário |
-| `@testing-library/jest-dom` | Matchers extras (`toBeInTheDocument`, `toBeDisabled`, …) |
-| `jsdom` | Ambiente DOM virtual |
-| `@vitest/coverage-v8` | Relatório de cobertura |
+| `@testing-library/react` | Component rendering and queries |
+| `@testing-library/user-event` | Real user interaction simulation |
+| `@testing-library/jest-dom` | Extra matchers (`toBeInTheDocument`, `toBeDisabled`, …) |
+| `jsdom` | Virtual DOM environment |
+| `@vitest/coverage-v8` | Coverage report |
 
-### Configuração
+### Configuration
 
 ```ts
 // vite.config.ts
@@ -1004,7 +1004,7 @@ import '@testing-library/jest-dom'
 
 ### Test utils
 
-Crie um utilitário de render que encapsula os providers obrigatórios (QueryClientProvider, etc.):
+Create a render utility that wraps the required providers (QueryClientProvider, etc.):
 
 ```tsx
 // src/test/utils.tsx
@@ -1036,7 +1036,7 @@ export function renderWithProviders(ui: React.ReactElement, options?: RenderOpti
 export * from '@testing-library/react'
 ```
 
-Importe de `@/test/utils` ao invés de `@testing-library/react` nos testes que precisam de providers.
+Import from `@/test/utils` instead of `@testing-library/react` in tests that need providers.
 
 ### Scripts
 
@@ -1051,30 +1051,30 @@ Importe de `@/test/utils` ao invés de `@testing-library/react` nos testes que p
 }
 ```
 
-`test` mantém o watcher ativo (desenvolvimento). `test:run` roda uma vez — use no CI.
+`test` keeps the watcher active (development). `test:run` runs once — use in CI.
 
 ---
 
-### O que testar
+### What to test
 
-| Camada | O que testar |
+| Layer | What to test |
 |---|---|
-| `helpers/` | Toda função pura — mesmo input → mesmo output |
-| `components/ui/` | Render correto, estados (disabled, loading), variantes de aparência |
-| `components/` de feature | Comportamento visível: renderiza dados, reage a interações |
-| `services/` (API) | Chama o endpoint correto, retorna o shape esperado, propaga erros |
-| `stores/` | Selectors e actions — testar a lógica do store diretamente, sem componente |
+| `helpers/` | Every pure function — same input → same output |
+| `components/ui/` | Correct render, states (disabled, loading), appearance variants |
+| Feature `components/` | Visible behavior: renders data, reacts to interactions |
+| `services/` (API) | Calls the correct endpoint, returns the expected shape, propagates errors |
+| `stores/` | Selectors and actions — test store logic directly, without a component |
 
-**O que NÃO testar:**
-- Implementação interna (nomes de classes CSS específicos que não têm semântica)
-- A integração completa com o servidor (isso é responsabilidade dos testes de integração do backend)
-- Detalhes de renderização que o usuário final não vê
+**What NOT to test:**
+- Internal implementation (specific CSS class names with no semantics)
+- Full server integration (that's the responsibility of backend integration tests)
+- Rendering details the end user doesn't see
 
 ---
 
-### Testes de helpers
+### Helper tests
 
-Simples e diretos — sem providers, sem mocks.
+Simple and direct — no providers, no mocks.
 
 ```typescript
 // helpers/format.test.ts
@@ -1099,9 +1099,9 @@ describe('celsiusToFahrenheit', () => {
 
 ---
 
-### Testes de componente
+### Component tests
 
-Para componentes que usam `useTranslation`, mocke `react-i18next` para evitar depender do setup completo de i18n:
+For components that use `useTranslation`, mock `react-i18next` to avoid depending on the full i18n setup:
 
 ```tsx
 // components/ui/Button.test.tsx
@@ -1111,17 +1111,17 @@ import { Button } from './Button'
 
 describe('Button', () => {
   it('renders children', () => {
-    render(<Button>Salvar</Button>)
-    expect(screen.getByRole('button', { name: 'Salvar' })).toBeInTheDocument()
+    render(<Button>Save</Button>)
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument()
   })
 
   it('shows "..." when loading', () => {
-    render(<Button loading>Salvar</Button>)
+    render(<Button loading>Save</Button>)
     expect(screen.getByRole('button')).toHaveTextContent('...')
   })
 
   it('is disabled when loading', () => {
-    render(<Button loading>Salvar</Button>)
+    render(<Button loading>Save</Button>)
     expect(screen.getByRole('button')).toBeDisabled()
   })
 })
@@ -1158,9 +1158,9 @@ describe('TemperatureCard', () => {
 
 ---
 
-### Testes de formulário com userEvent
+### Form tests with userEvent
 
-Use `userEvent.setup()` para simular interações reais (focus, input, click):
+Use `userEvent.setup()` to simulate real interactions (focus, input, click):
 
 ```tsx
 // features/temperature-list/components/AddTemperatureForm.test.tsx
@@ -1208,9 +1208,9 @@ describe('AddTemperatureForm', () => {
 
 ---
 
-### Testes de serviço (API)
+### Service tests (API)
 
-Use `vi.mock` para substituir o módulo `api` — teste o contrato (qual endpoint é chamado, qual shape é retornado) sem dependência de rede.
+Use `vi.mock` to replace the `api` module — test the contract (which endpoint is called, which shape is returned) without a network dependency.
 
 ```typescript
 // services/health/index.test.ts
@@ -1225,7 +1225,7 @@ vi.mock('@/lib/api', () => ({
 const mockGet = vi.mocked(api.get)
 
 describe('ping', () => {
-  beforeEach(() => mockGet.mockReset())  // mockReset limpa implementações; mockClear só limpa contagens
+  beforeEach(() => mockGet.mockReset())  // mockReset clears implementations; mockClear only clears call counts
 
   it('calls GET /ping and returns { status: "ok" }', async () => {
     mockGet.mockResolvedValueOnce({ status: 'ok' })
@@ -1237,7 +1237,7 @@ describe('ping', () => {
   })
 
   it('propagates rejection when backend is unreachable', async () => {
-    mockGet.mockRejectedValueOnce(new Error('Network Error'))  // Once, não Value — veja nota abaixo
+    mockGet.mockRejectedValueOnce(new Error('Network Error'))  // Once, not Value — see note below
 
     await expect(ping()).rejects.toThrow('Network Error')
   })
@@ -1268,12 +1268,12 @@ describe('checkHealth', () => {
 })
 ```
 
-> **Vitest 2.x — `mockReset` e `mockRejectedValueOnce`**
+> **Vitest 2.x — `mockReset` and `mockRejectedValueOnce`**
 >
-> - `mockClear()` limpa apenas o histórico de chamadas (`.mock.calls`), **não** as implementações registradas. Use sempre `mockReset()` no `beforeEach` para garantir que implementações de um teste não vazem para o próximo.
-> - `mockRejectedValue(err)` (versão permanente) armazena internamente um `Promise.reject()` criado imediatamente. O Vitest 2.x detecta essa promise como "não tratada" antes que o teste possa capturá-la, o que faz o teste falhar mesmo com a assertion correta. Use `mockRejectedValueOnce(err)` — ele cria a promise rejeitada de forma preguiçosa, apenas quando o mock é chamado.
+> - `mockClear()` only clears the call history (`.mock.calls`), **not** the registered implementations. Always use `mockReset()` in `beforeEach` to ensure implementations from one test don't leak into the next.
+> - `mockRejectedValue(err)` (permanent variant) internally stores an immediately created `Promise.reject()`. Vitest 2.x detects this promise as "unhandled" before the test can catch it, causing the test to fail even with the correct assertion. Use `mockRejectedValueOnce(err)` — it creates the rejected promise lazily, only when the mock is called.
 
-O módulo de serviço que esses testes exercitam:
+The service module these tests exercise:
 
 ```typescript
 // services/health/index.ts
@@ -1285,7 +1285,7 @@ export interface HealthCheckResult {
 }
 
 export async function ping(): Promise<{ status: string }> {
-  return await api.get('/ping')  // return await — necessário para propagação correta de rejeições
+  return await api.get('/ping')  // return await — required for correct rejection propagation
 }
 
 export async function checkHealth(): Promise<HealthCheckResult> {
@@ -1295,9 +1295,9 @@ export async function checkHealth(): Promise<HealthCheckResult> {
 
 ---
 
-### Testes de hook React Query
+### React Query hook tests
 
-Para testar hooks `useQuery`/`useMutation` em isolamento (sem renderizar um componente completo), use `renderHook` com um wrapper que fornece o `QueryClientProvider`:
+To test `useQuery`/`useMutation` hooks in isolation (without rendering a full component), use `renderHook` with a wrapper that provides `QueryClientProvider`:
 
 ```typescript
 // services/projects/queries.test.ts
@@ -1338,13 +1338,13 @@ describe('useProjects', () => {
 })
 ```
 
-> Crie um `QueryClient` novo dentro da função `wrapper` para cada teste — isso garante isolamento de cache entre testes.
+> Create a new `QueryClient` inside the `wrapper` function for each test — this ensures cache isolation between tests.
 
 ---
 
-### Estrutura de arquivos de teste
+### Test file structure
 
-Coloque os arquivos de teste **ao lado** do arquivo que testam, com sufixo `.test.ts(x)`:
+Place test files **next to** the file they test, with the `.test.ts(x)` suffix:
 
 ```
 src/
@@ -1363,8 +1363,8 @@ src/
 │   ├── index.ts
 │   └── index.test.ts
 └── test/
-    ├── setup.ts      → setupFiles globais
-    └── utils.tsx     → renderWithProviders e re-exports
+    ├── setup.ts      → global setupFiles
+    └── utils.tsx     → renderWithProviders and re-exports
 ```
 
 ---
@@ -1373,7 +1373,7 @@ src/
 
 ### Setup (v4)
 
-Tailwind v4 não precisa de arquivo de configuração — funciona via plugin do Vite e uma única diretiva no CSS.
+Tailwind v4 needs no configuration file — it works via the Vite plugin and a single CSS directive.
 
 ```ts
 // vite.config.ts
@@ -1391,7 +1391,7 @@ export default defineConfig({
 
 ### Helper `cn`
 
-Use sempre `cn()` para classes condicionais. Ele combina `clsx` (lógica condicional) com `tailwind-merge` (resolve conflitos de classes Tailwind).
+Always use `cn()` for conditional classes. It combines `clsx` (conditional logic) with `tailwind-merge` (resolves Tailwind class conflicts).
 
 ```ts
 // src/lib/cn.ts
@@ -1404,39 +1404,39 @@ export function cn(...inputs: ClassValue[]) {
 ```
 
 ```tsx
-// Uso em componentes
+// Usage in components
 import { cn } from '@/lib/cn'
 
 <button className={cn('px-4 py-2 rounded-md', isActive && 'bg-blue-600 text-white')} />
 ```
 
-### Convenções
+### Conventions
 
 ```
-✅ Usar classes Tailwind para todo estilo
-✅ Usar cn() para classes condicionais ou que se combinam com props
-✅ Extrair combinações longas para variáveis antes do JSX
+✅ Use Tailwind classes for all styling
+✅ Use cn() for conditional classes or those combined with props
+✅ Extract long combinations into variables before JSX
 
-❌ Nunca usar style={{ }} inline — exceto para valores genuinamente dinâmicos (ex: width em porcentagem calculada em runtime)
-❌ Nunca misturar Tailwind com CSS externo para o mesmo elemento
-❌ Nunca duplicar classes que conflitem (ex: `text-sm text-lg`) — use cn() que resolve o conflito
+❌ Never use inline style={{ }} — except for genuinely dynamic values (e.g., runtime-computed width percentages)
+❌ Never mix Tailwind with external CSS on the same element
+❌ Never duplicate conflicting classes (e.g., `text-sm text-lg`) — use cn() which resolves the conflict
 ```
 
 ```tsx
-// ❌ Style inline desnecessário
+// ❌ Unnecessary inline style
 <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
 
 // ✅ Tailwind
 <div className="flex gap-2 mb-4">
 
-// ✅ Condicional com cn()
+// ✅ Conditional with cn()
 <div className={cn('flex gap-2', isOpen ? 'mb-4' : 'mb-0')}>
 
-// ✅ Valor genuinamente dinâmico (calculado em JS)
+// ✅ Genuinely dynamic value (computed in JS)
 <div className="relative" style={{ width: `${progress}%` }}>
 ```
 
-### Variantes de componentes com `cn`
+### Component variants with `cn`
 
 ```tsx
 interface BadgeProps {
@@ -1463,7 +1463,7 @@ export function Badge({ variant = 'default', children }: BadgeProps) {
 
 ## ESLint
 
-### Configuração (flat config, v9)
+### Configuration (flat config, v9)
 
 ```js
 // eslint.config.js
@@ -1508,27 +1508,27 @@ export default tseslint.config(
 }
 ```
 
-### Regras importantes
+### Important rules
 
-| Regra | Por quê |
+| Rule | Why |
 |---|---|
-| `no-explicit-any` como erro | Força tipagem correta — use `unknown` e narrowing |
-| `no-unused-vars` como erro | Mantém o código limpo; prefixe com `_` o que é intencional |
-| `react-hooks/rules-of-hooks` | Garante hooks chamados na ordem certa |
-| `react-hooks/exhaustive-deps` | Evita bugs silenciosos em `useEffect` com deps faltando |
-| `no-console` como warning | Logs de debug não devem ir para produção |
+| `no-explicit-any` as error | Forces correct typing — use `unknown` and narrowing |
+| `no-unused-vars` as error | Keeps code clean; prefix intentional ones with `_` |
+| `react-hooks/rules-of-hooks` | Ensures hooks are called in the correct order |
+| `react-hooks/exhaustive-deps` | Prevents silent bugs in `useEffect` with missing deps |
+| `no-console` as warning | Debug logs should not go to production |
 
 ---
 
-## TypeScript — Convenções
+## TypeScript — Conventions
 
 ```typescript
-// ✅ Tipos de domínio em types.ts de cada serviço ou feature
-// ✅ Tipos globais (User, Pagination, ApiResponse) em src/types/index.ts
-// ✅ Props de componentes definidas como interface no mesmo arquivo
-// ❌ Nunca usar `any` — prefira `unknown` e narrowing
+// ✅ Domain types in types.ts for each service or feature
+// ✅ Global types (User, Pagination, ApiResponse) in src/types/index.ts
+// ✅ Component props defined as interface in the same file
+// ❌ Never use `any` — prefer `unknown` and narrowing
 
-// Interface de props junto ao componente
+// Props interface alongside the component
 interface UserCardProps {
   user: User
   onSelect?: (id: number) => void
@@ -1542,38 +1542,38 @@ export function UserCard({ user, onSelect, compact = false }: UserCardProps) {
 
 ---
 
-## Checklist para novo projeto
+## Checklist for a new project
 
-- [ ] `"type": "module"` declarado no `package.json`
-- [ ] `"types": ["vite/client"]` em `compilerOptions` do `tsconfig.json`
-- [ ] `src/lib/api.ts` criado com `ApiInstance` + interceptor de resposta (extrai `.data`)
-- [ ] Se precisar de JWT: interceptor de request no `api.ts` lê token do store Zustand
+- [ ] `"type": "module"` declared in `package.json`
+- [ ] `"types": ["vite/client"]` in `compilerOptions` of `tsconfig.json`
+- [ ] `src/lib/api.ts` created with `ApiInstance` + response interceptor (extracts `.data`)
+- [ ] If JWT is needed: request interceptor in `api.ts` reads token from Zustand store
 
-## Checklist para nova feature
+## Checklist for a new feature
 
-- [ ] Pasta `features/{feature}/` criada com `components/`, `hooks/`, `index.ts`
-- [ ] Tipos de API em `services/{feature}/types.ts`
-- [ ] queryKeys em `services/{feature}/keys.ts`
-- [ ] Queries em `services/{feature}/queries.ts`
-- [ ] Mutations em `services/{feature}/actions.ts`
-- [ ] Se precisar de estado global: store em `stores/{feature}/` com os 4 arquivos
-- [ ] Componentes com no máximo 100 linhas — separar lógica em hook e JSX em subcomponentes
-- [ ] Estilo via classes Tailwind — sem `style={{}}` inline exceto valores dinâmicos calculados em JS
-- [ ] Classes condicionais usando `cn()` de `@/lib/cn`
-- [ ] Textos visíveis ao usuário usando `t()` do i18n
-- [ ] Funções utilitárias novas em `helpers/` com teste unitário
-- [ ] Novos serviços de API em `services/{dominio}/` com teste de contrato (`vi.mock`)
-- [ ] Testes de serviço usam `mockReset()` no `beforeEach` e `mockRejectedValueOnce()` (não `mockRejectedValue`)
-- [ ] Funções async de serviço usam `return await` (não `return`) para propagação correta de erros
-- [ ] Exports públicos da feature via `index.ts`
+- [ ] `features/{feature}/` folder created with `components/`, `hooks/`, `index.ts`
+- [ ] API types in `services/{feature}/types.ts`
+- [ ] queryKeys in `services/{feature}/keys.ts`
+- [ ] Queries in `services/{feature}/queries.ts`
+- [ ] Mutations in `services/{feature}/actions.ts`
+- [ ] If global state is needed: store in `stores/{feature}/` with the 4 files
+- [ ] Components with at most 100 lines — separate logic into hooks and JSX into subcomponents
+- [ ] Styling via Tailwind classes — no inline `style={{}}` except for dynamically computed JS values
+- [ ] Conditional classes using `cn()` from `@/lib/cn`
+- [ ] User-visible text using `t()` from i18n
+- [ ] New utility functions in `helpers/` with unit tests
+- [ ] New API services in `services/{domain}/` with contract tests (`vi.mock`)
+- [ ] Service tests use `mockReset()` in `beforeEach` and `mockRejectedValueOnce()` (not `mockRejectedValue`)
+- [ ] Async service functions use `return await` (not `return`) for correct error propagation
+- [ ] Feature public exports via `index.ts`
 
-## Checklist para novo componente reutilizável
+## Checklist for a new reusable component
 
-- [ ] Vai ser usado em mais de uma feature? → `components/shared/`
-- [ ] É um elemento base sem lógica de negócio? → `components/ui/`
-- [ ] Props tipadas com `interface` no mesmo arquivo
-- [ ] Sem chamada direta a store ou API se for `ui/`
-- [ ] Sem lógica inline no JSX — pré-computar antes do `return`
-- [ ] Variantes de aparência via `cn()` e objeto de classes, não `style={{}}`
-- [ ] `npm run lint` passa sem erros antes de commitar
-- [ ] `npm run test:run` passa sem erros antes de commitar
+- [ ] Will be used in more than one feature? → `components/shared/`
+- [ ] Is it a base element without business logic? → `components/ui/`
+- [ ] Props typed with `interface` in the same file
+- [ ] No direct store or API calls if in `ui/`
+- [ ] No inline logic in JSX — pre-compute before `return`
+- [ ] Appearance variants via `cn()` and class object, not `style={{}}`
+- [ ] `npm run lint` passes without errors before committing
+- [ ] `npm run test:run` passes without errors before committing

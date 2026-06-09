@@ -15,7 +15,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "Temperature API",
         Version = "v1",
-        Description = "API de monitoramento de temperaturas."
+        Description = "Temperature monitoring API."
     });
 });
 
@@ -44,15 +44,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors();
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthorization();
 app.MapControllers();
 
-// Liveness — responde imediatamente, sem verificar dependências
+// Liveness — responds immediately, no dependency checks
 app.MapGet("/ping", () => Results.Ok(new { status = "ok" }))
    .ExcludeFromDescription();
 
-// Readiness — verifica saúde das dependências registradas
+// Readiness — checks health of registered dependencies
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>

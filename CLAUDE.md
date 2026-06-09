@@ -1,47 +1,47 @@
 # base-docs-development
 
-Repositório base para desenvolvimento assistido por Claude Code. Contém guidelines de arquitetura e projetos de referência implementando esses padrões.
+Base repository for Claude Code-assisted development. Contains architecture guidelines and reference projects implementing those patterns.
 
-## O que é este repositório
+## What this repository is
 
-Serve como ponto de partida para novos projetos. Quando iniciar uma sessão:
+Serves as a starting point for new projects. When starting a session:
 
-1. Leia `guidelines/` — são a fonte de verdade dos padrões adotados
-2. Consulte `projects/temperature-*` como implementação de referência mínima
-3. Consulte `projects/docmap-*` como showcase com JWT, React Flow e funcionalidades mais avançadas
+1. Read `guidelines/` — they are the source of truth for adopted patterns
+2. Use `projects/temperature-*` as the minimal reference implementation
+3. Use `projects/docmap-*` as a showcase with JWT, React Flow, and more advanced features
 
-## Estrutura
+## Structure
 
 ```
 guidelines/
-  csharp-api.md         → API REST C# .NET 8 + Dapper + PostgreSQL + DbUp + testes
+  csharp-api.md         → REST API C# .NET 8 + Dapper + PostgreSQL + DbUp + tests
   react-frontend.md     → React + TypeScript + Vite 5 + Tailwind v4 + React Query + Zustand + Vitest
 
 projects/
-  temperature-api/      → Backend de referência — CRUD simples, sem auth
-  temperature-web/      → Frontend de referência — listagem, formulário, testes
-  docmap-api/           → Showcase — JWT, múltiplos recursos relacionados, export zip
+  temperature-api/      → Reference backend — simple CRUD, no auth
+  temperature-web/      → Reference frontend — listing, form, tests
+  docmap-api/           → Showcase — JWT, multiple related resources, zip export
   docmap-web/           → Showcase — React Flow canvas, Zustand persist, side panel editor
 ```
 
-## Criar novo projeto a partir deste base
+## Creating a new project from this base
 
-**Backend:** copie `temperature-api/` para um novo diretório e rode o script de bootstrap:
+**Backend:** copy `temperature-api/` to a new directory and run the bootstrap script:
 
 ```bash
-cp -r projects/temperature-api projects/meu-projeto-api
-cd projects/meu-projeto-api
-bash rename.sh MeuProjeto          # ex: OrdersApi, ProductCatalog
+cp -r projects/temperature-api projects/my-project-api
+cd projects/my-project-api
+bash rename.sh MyProject          # e.g.: OrdersApi, ProductCatalog
 ```
 
-O script substitui namespaces, nome do banco e volume Docker em todos os arquivos e renomeia pastas e `.sln` automaticamente. A entidade de exemplo (`TemperatureReading`) é mantida como referência — adicione suas entidades seguindo o mesmo padrão e remova-a quando não precisar mais. Para JWT, siga a seção correspondente em `guidelines/csharp-api.md`.
+The script replaces namespaces, database name, and Docker volume across all files and automatically renames folders and `.sln`. The example entity (`TemperatureReading`) is kept as a reference — add your entities following the same pattern and remove it when no longer needed. For JWT, follow the corresponding section in `guidelines/csharp-api.md`.
 
-**Frontend:** copie `temperature-web/` e ajuste `package.json`. Certifique-se de que `"type":"module"` e `"types":["vite/client"]` estão presentes — ambos são obrigatórios.
+**Frontend:** copy `temperature-web/` and adjust `package.json`. Make sure `"type":"module"` and `"types":["vite/client"]` are present — both are required.
 
-## Portas locais (convenção)
+## Local ports (convention)
 
-| Projeto | Serviço | Porta |
-|---------|---------|-------|
+| Project | Service | Port |
+|---------|---------|------|
 | temperature-api | API | 5000 |
 | temperature-web | Dev server | 5173 |
 | temperature-api | PostgreSQL | 5432 |
@@ -49,47 +49,52 @@ O script substitui namespaces, nome do banco e volume Docker em todos os arquivo
 | docmap-web | Dev server | 5174 |
 | docmap-api | PostgreSQL | 5433 |
 
-Use portas diferentes para evitar conflito quando rodar múltiplos projetos ao mesmo tempo.
+Use different ports to avoid conflicts when running multiple projects at the same time.
 
 ## Stack
 
-| Camada | Stack |
-|--------|-------|
+| Layer | Stack |
+|-------|-------|
 | Backend | .NET 8, Dapper, PostgreSQL 16, DbUp, Npgsql |
-| Backend testes | xUnit, FluentAssertions, NSubstitute, WebApplicationFactory |
+| Backend tests | xUnit, FluentAssertions, NSubstitute, WebApplicationFactory |
 | Frontend | React 18, TypeScript 5, Vite 5, Tailwind v4 |
-| Frontend estado | TanStack Query 5 (servidor), Zustand 4 (cliente) |
-| Frontend testes | Vitest 2.x, Testing Library, jsdom |
-| Infra local | Docker Compose (PostgreSQL) |
+| Frontend state | TanStack Query 5 (server), Zustand 4 (client) |
+| Frontend tests | Vitest 2.x, Testing Library, jsdom |
+| Local infra | Docker Compose (PostgreSQL) |
 
-## Convenções críticas (resumo)
+## Language
+
+- **Conversations:** always in Portuguese — all responses, explanations, and questions to the user
+- **Code, documentation, and git:** always in English — source files, comments, commit messages, PR descriptions, guidelines
+
+## Critical conventions (summary)
 
 **Backend:**
-- `DefaultTypeMap.MatchNamesWithUnderscores = true` — snake_case no banco, PascalCase no C#
-- Toda resposta dentro de `ApiResponse<T>` — nunca retorne o objeto diretamente
-- Migrações como `EmbeddedResource` numeradas (`001_*.sql`) — nunca alterar script já executado
-- `public partial class Program {}` no final de `Program.cs` — obrigatório para `WebApplicationFactory`
-- Testes de integração substituem repositórios e `IMigrationRunner` por mocks — sem banco real no CI
+- `DefaultTypeMap.MatchNamesWithUnderscores = true` — snake_case in the database, PascalCase in C#
+- Every response wrapped in `ApiResponse<T>` — never return the object directly
+- Migrations as numbered `EmbeddedResource` (`001_*.sql`) — never alter an already-executed script
+- `public partial class Program {}` at the end of `Program.cs` — required for `WebApplicationFactory`
+- Integration tests replace repositories and `IMigrationRunner` with mocks — no real database in CI
 
 **Frontend:**
-- `"type":"module"` no `package.json` — obrigatório para `@tailwindcss/vite`
-- `"types":["vite/client"]` no `tsconfig.json` — obrigatório para `import.meta.env`
-- `api.ts` exporta `ApiInstance` typed — sem casts nos serviços
-- `mockReset()` no `beforeEach` (não `mockClear`) — limpa implementações também
-- `mockRejectedValueOnce()` (não `mockRejectedValue`) — Vitest 2.x detecta o variant permanente como unhandled rejection
-- `return await` em funções async de serviço — propagação correta de erros
+- `"type":"module"` in `package.json` — required for `@tailwindcss/vite`
+- `"types":["vite/client"]` in `tsconfig.json` — required for `import.meta.env`
+- `api.ts` exports typed `ApiInstance` — no casts in services
+- `mockReset()` in `beforeEach` (not `mockClear`) — also clears implementations
+- `mockRejectedValueOnce()` (not `mockRejectedValue`) — Vitest 2.x detects the permanent variant as unhandled rejection
+- `return await` in async service functions — correct error propagation
 
-## Comandos rápidos
+## Quick commands
 
 ```bash
-# Backend (em projects/{nome}-api/)
-docker compose up -d          # inicia PostgreSQL
-dotnet run --project src/{Nome}.Api
+# Backend (in projects/{name}-api/)
+docker compose up -d          # starts PostgreSQL
+dotnet run --project src/{Name}.Api
 dotnet test
 
-# Frontend (em projects/{nome}-web/)
+# Frontend (in projects/{name}-web/)
 npm install
-cp .env.example .env.local    # edite com a URL da API
+cp .env.example .env.local    # edit with the API URL
 npm run dev
 npm run test:run
 ```

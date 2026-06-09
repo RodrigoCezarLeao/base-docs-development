@@ -1,30 +1,30 @@
-# Guideline — API REST em C# com Controller / Service / Repository + Dapper
+# Guideline — REST API in C# with Controller / Service / Repository + Dapper
 
-## Propósito
+## Purpose
 
-Este documento define o padrão adotado para construção de APIs RESTful em C# .NET 8. O objetivo é garantir consistência entre projetos: mesma estrutura de pastas, mesmas convenções de nomenclatura, mesmo envelope de resposta e mesmo comportamento HTTP.
+This document defines the adopted standard for building RESTful APIs in C# .NET 8. The goal is to ensure consistency across projects: the same folder structure, the same naming conventions, the same response envelope, and the same HTTP behavior.
 
-Qualquer desenvolvedor (ou o Claude) deve conseguir criar uma nova entidade seguindo este guia sem precisar inventar estrutura.
+Any developer (or Claude) should be able to create a new entity by following this guide without having to invent structure.
 
 ---
 
-## Estrutura de Projetos
+## Project Structure
 
-Toda API segue uma solution com **4 projetos separados por responsabilidade**:
+Every API follows a solution with **4 projects separated by responsibility**:
 
 ```
-{NomeDaSolution}.sln
+{SolutionName}.sln
 src/
-├── {Nome}.Api             → Entrada HTTP: controllers, middleware, Program.cs
-├── {Nome}.Application     → Regras de negócio: services, DTOs, requests, responses
-├── {Nome}.Domain          → Entidades de domínio: models puros
-└── {Nome}.Infrastructure  → Acesso a dados: Dapper, repositórios, fábrica de conexão, migrações
+├── {Name}.Api             → HTTP entry point: controllers, middleware, Program.cs
+├── {Name}.Application     → Business rules: services, DTOs, requests, responses
+├── {Name}.Domain          → Domain entities: pure models
+└── {Name}.Infrastructure  → Data access: Dapper, repositories, connection factory, migrations
 tests/
-└── {Nome}.Tests           → Testes unitários (Unit/) e de integração (Integration/)
-docker-compose.yml         → Banco PostgreSQL para desenvolvimento local
+└── {Name}.Tests           → Unit tests (Unit/) and integration tests (Integration/)
+docker-compose.yml         → PostgreSQL database for local development
 ```
 
-**Direção das dependências** (nunca invertida):
+**Dependency direction** (never reversed):
 
 ```
 Api → Application → Domain
@@ -32,18 +32,18 @@ Api → Application → Domain
   Infrastructure → Domain
 ```
 
-Infrastructure conhece Application (usa suas interfaces), mas Application nunca referencia Infrastructure diretamente — só via contrato.
+Infrastructure knows Application (uses its interfaces), but Application never references Infrastructure directly — only via contract.
 
 ---
 
-## Camada Domain
+## Domain Layer
 
-Contém apenas as **entidades que espelham as tabelas do banco**. Sem lógica de negócio, sem atributos de framework, sem dependências externas.
+Contains only **entities that mirror database tables**. No business logic, no framework attributes, no external dependencies.
 
-Todo model deve incluir os campos de controle obrigatórios:
+Every model must include the required control fields:
 
 ```csharp
-namespace {Nome}.Domain.Models;
+namespace {Name}.Domain.Models;
 
 public class Pedido
 {
@@ -58,11 +58,11 @@ public class Pedido
 
 ---
 
-## Camada Application
+## Application Layer
 
 ### DTOs
 
-Objeto de **saída** da API. Sempre `record` imutável. Nunca exponha campos sensíveis (senha, tokens, dados internos).
+The API **output** object. Always an immutable `record`. Never expose sensitive fields (passwords, tokens, internal data).
 
 ```csharp
 public record PedidoDto(
@@ -77,7 +77,7 @@ public record PedidoDto(
 
 ### Requests
 
-Objeto de **entrada** da API. Sempre `record` com `DataAnnotations` para validação.
+The API **input** object. Always a `record` with `DataAnnotations` for validation.
 
 ```csharp
 public record CreatePedidoRequest(
@@ -92,9 +92,9 @@ public record UpdatePedidoRequest(
 );
 ```
 
-### Envelope de Resposta
+### Response Envelope
 
-**Toda** resposta da API é envolvida em `ApiResponse<T>`. Nunca retorne o objeto diretamente.
+**Every** API response is wrapped in `ApiResponse<T>`. Never return the object directly.
 
 ```csharp
 public record ApiResponse<T>
@@ -123,19 +123,19 @@ public record ApiResponse<T>
 }
 ```
 
-Formato de sucesso:
+Success format:
 ```json
 { "success": true, "data": { ... }, "message": null, "errors": null }
 ```
 
-Formato de erro:
+Error format:
 ```json
-{ "success": false, "data": null, "message": "Pedido com id 5 não encontrado.", "errors": null }
+{ "success": false, "data": null, "message": "Pedido with id 5 not found.", "errors": null }
 ```
 
-### Paginação
+### Pagination
 
-Sempre paginar listagens. Use `PagedResponse<T>`:
+Always paginate listings. Use `PagedResponse<T>`:
 
 ```csharp
 public record PagedResponse<T>(
@@ -153,11 +153,11 @@ public record PagedResponse<T>(
 
 ### Service
 
-O service orquestra a lógica de negócio. Ele:
-- Chama o repositório via interface
-- Valida regras de negócio (não validação de formato — isso é responsabilidade do request)
-- Mapeia Model → DTO
-- Retorna `ApiResponse<T>`
+The service orchestrates business logic. It:
+- Calls the repository via interface
+- Validates business rules (not format validation — that's the request's responsibility)
+- Maps Model → DTO
+- Returns `ApiResponse<T>`
 
 ```csharp
 public class PedidoService(IPedidoRepository repository) : IPedidoService
@@ -166,27 +166,27 @@ public class PedidoService(IPedidoRepository repository) : IPedidoService
     {
         var pedido = await repository.GetByIdAsync(id, cancellationToken);
         if (pedido is null)
-            return ApiResponse<PedidoDto>.Fail($"Pedido com id {id} não encontrado.");
+            return ApiResponse<PedidoDto>.Fail($"Pedido with id {id} not found.");
 
         return ApiResponse<PedidoDto>.Ok(MapToDto(pedido));
     }
 
-    // ... demais métodos
+    // ... other methods
 
     private static PedidoDto MapToDto(Pedido p) =>
         new(p.Id, p.Numero, p.Total, p.IsActive, p.CreatedAt, p.UpdatedAt);
 }
 ```
 
-O service **não** lança exceção quando um registro não é encontrado — retorna `Fail()`. Exceções são para erros inesperados, não para fluxo de negócio.
+The service **does not** throw an exception when a record is not found — it returns `Fail()`. Exceptions are for unexpected errors, not business flow.
 
 ---
 
-## Camada Infrastructure
+## Infrastructure Layer
 
-### Fábrica de Conexão
+### Connection Factory
 
-Centraliza a criação da conexão com o banco. Registrada como `Singleton` no DI.
+Centralizes database connection creation. Registered as `Singleton` in DI.
 
 ```csharp
 public interface IDbConnectionFactory
@@ -194,7 +194,7 @@ public interface IDbConnectionFactory
     IDbConnection CreateConnection();
 }
 
-// PostgreSQL (padrão)
+// PostgreSQL (default)
 public class DbConnectionFactory(string connectionString) : IDbConnectionFactory
 {
     public IDbConnection CreateConnection() => new NpgsqlConnection(connectionString);
@@ -203,13 +203,13 @@ public class DbConnectionFactory(string connectionString) : IDbConnectionFactory
 
 ### BaseRepository
 
-Todo repositório herda de `BaseRepository<T, TKey>`, que oferece dois helpers:
+Every repository inherits from `BaseRepository<T, TKey>`, which provides two helpers:
 
 ```csharp
 public abstract class BaseRepository<T, TKey>(IDbConnectionFactory connectionFactory)
     : IBaseRepository<T, TKey> where T : class
 {
-    // Abre e fecha a conexão automaticamente
+    // Opens and closes the connection automatically
     protected async Task<TResult> QueryAsync<TResult>(
         Func<IDbConnection, Task<TResult>> query,
         CancellationToken cancellationToken = default)
@@ -218,7 +218,7 @@ public abstract class BaseRepository<T, TKey>(IDbConnectionFactory connectionFac
         return await query(connection);
     }
 
-    // Abre conexão, executa em transação, commit ou rollback automático
+    // Opens connection, executes in transaction, automatic commit or rollback
     protected async Task<TResult> QueryInTransactionAsync<TResult>(
         Func<IDbConnection, IDbTransaction, Task<TResult>> query,
         CancellationToken cancellationToken = default)
@@ -241,7 +241,7 @@ public abstract class BaseRepository<T, TKey>(IDbConnectionFactory connectionFac
 }
 ```
 
-`IBaseRepository<T, TKey>` define o contrato CRUD:
+`IBaseRepository<T, TKey>` defines the CRUD contract:
 
 ```csharp
 public interface IBaseRepository<T, TKey> where T : class
@@ -254,9 +254,9 @@ public interface IBaseRepository<T, TKey> where T : class
 }
 ```
 
-### Repositório Concreto
+### Concrete Repository
 
-Cada entidade tem sua própria interface (para queries específicas) e implementação:
+Each entity has its own interface (for specific queries) and implementation:
 
 ```csharp
 public interface IPedidoRepository : IBaseRepository<Pedido, int>
@@ -278,7 +278,7 @@ public class PedidoRepository(IDbConnectionFactory connectionFactory)
     public async Task<(IEnumerable<Pedido> Items, int TotalCount)> GetPagedAsync(
         int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        // QueryMultiple faz as duas queries em uma única ida ao banco
+        // QueryMultiple executes both queries in a single database round trip
         const string sql = @"
             SELECT * FROM Pedidos WHERE IsActive = 1
             ORDER BY CreatedAt DESC
@@ -301,7 +301,7 @@ public class PedidoRepository(IDbConnectionFactory connectionFactory)
 
     public override async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        // Sempre soft delete — nunca DELETE físico
+        // Always soft delete — never physical DELETE
         const string sql = "UPDATE Pedidos SET IsActive = 0, UpdatedAt = @UpdatedAt WHERE Id = @Id";
         var affected = await QueryAsync(conn =>
             conn.ExecuteAsync(sql, new { Id = id, UpdatedAt = DateTime.UtcNow }), cancellationToken);
@@ -312,11 +312,11 @@ public class PedidoRepository(IDbConnectionFactory connectionFactory)
 
 ---
 
-## Camada Api
+## Api Layer
 
 ### Controller
 
-Responsabilidade única: receber a requisição HTTP, chamar o service e devolver o status code correto.
+Single responsibility: receive the HTTP request, call the service, and return the correct status code.
 
 ```csharp
 [ApiController]
@@ -367,19 +367,19 @@ public class PedidosController(IPedidoService service) : ControllerBase
 
 ### Status Codes
 
-| Operação | Rota | Sucesso | Não encontrado | Inválido |
+| Operation | Route | Success | Not found | Invalid |
 |---|---|---|---|---|
-| Listar | `GET /api/v1/pedidos` | `200` | — | — |
-| Buscar | `GET /api/v1/pedidos/{id}` | `200` | `404` | — |
-| Criar | `POST /api/v1/pedidos` | `201` | — | `400` |
-| Atualizar | `PUT /api/v1/pedidos/{id}` | `200` | `404` | `400` |
-| Deletar | `DELETE /api/v1/pedidos/{id}` | `200` | `404` | — |
+| List | `GET /api/v1/pedidos` | `200` | — | — |
+| Get by ID | `GET /api/v1/pedidos/{id}` | `200` | `404` | — |
+| Create | `POST /api/v1/pedidos` | `201` | — | `400` |
+| Update | `PUT /api/v1/pedidos/{id}` | `200` | `404` | `400` |
+| Delete | `DELETE /api/v1/pedidos/{id}` | `200` | `404` | — |
 
-O `400` por validação de request é automático via `[ApiController]` + `DataAnnotations`.
+The `400` from request validation is automatic via `[ApiController]` + `DataAnnotations`.
 
-### Middleware de Exceção
+### Exception Middleware
 
-Captura exceções não tratadas e retorna `ApiResponse<T>` padronizado:
+Catches unhandled exceptions and returns a standardized `ApiResponse<T>`:
 
 ```csharp
 public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
@@ -427,16 +427,16 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new()
     {
-        Title = "Minha API",
+        Title = "My API",
         Version = "v1",
-        Description = "Descrição da API."
+        Description = "API description."
     });
 });
 
 builder.Services.AddHealthChecks();
-// Para verificar conectividade com o banco, adicione:
+// To verify database connectivity, add:
 // builder.Services.AddHealthChecks().AddNpgsql(connectionString);
-// (requer NuGet: AspNetCore.HealthChecks.Npgsql)
+// (requires NuGet: AspNetCore.HealthChecks.Npgsql)
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -452,15 +452,18 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthorization();
 app.MapControllers();
 
-// Liveness — sem dependências, sempre responde
+// Liveness — no dependencies, always responds
 app.MapGet("/ping", () => Results.Ok(new { status = "ok" }))
    .ExcludeFromDescription();
 
-// Readiness — verifica saúde das dependências registradas
+// Readiness — checks health of registered dependencies
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
@@ -482,23 +485,56 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 
 app.Run();
 
-// Expõe Program para WebApplicationFactory nos testes de integração
+// Exposes Program for WebApplicationFactory in integration tests
 public partial class Program { }
+```
+
+### launchSettings.json
+
+Without this file, `dotnet run` defaults to the `Production` environment — Swagger is hidden and `UseHttpsRedirection` triggers a warning because no HTTPS port is configured locally.
+
+Create `src/{Name}.Api/Properties/launchSettings.json`:
+
+```json
+{
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:{port}",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+```
+
+With this in place, `dotnet run` automatically sets `Development` and binds to the correct port with no extra flags.
+
+`UseHttpsRedirection` must be guarded so it only runs outside Development (where HTTPS is actually configured):
+
+```csharp
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 ```
 
 ### Swagger
 
-O Swagger é configurado via `Swashbuckle.AspNetCore` e exposto apenas em `Development`.
+Swagger is configured via `Swashbuckle.AspNetCore` and exposed only in `Development`.
 
 ```csharp
-// Registro
+// Registration
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new()
     {
-        Title  = "Minha API",
+        Title  = "My API",
         Version = "v1",
-        Description = "Descrição da API."
+        Description = "API description."
     });
 });
 
@@ -506,11 +542,11 @@ builder.Services.AddSwaggerGen(options =>
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(); // UI em /swagger
+    app.UseSwaggerUI(); // UI at /swagger
 }
 ```
 
-Para que os endpoints apareçam corretamente no Swagger, os controllers devem declarar `[Produces("application/json")]` e os métodos devem usar `[ProducesResponseType]`:
+For endpoints to appear correctly in Swagger, controllers must declare `[Produces("application/json")]` and methods must use `[ProducesResponseType]`:
 
 ```csharp
 [Produces("application/json")]
@@ -523,20 +559,20 @@ public class PedidosController : ControllerBase
 }
 ```
 
-UI disponível em: `http://localhost:{porta}/swagger`
+UI available at: `http://localhost:{port}/swagger`
 
 ### Health Checks
 
-Toda API deve expor dois endpoints de verificação de saúde:
+Every API must expose two health check endpoints:
 
-| Endpoint | Finalidade | Verifica banco? |
+| Endpoint | Purpose | Checks database? |
 |---|---|---|
-| `GET /ping` | Liveness — a aplicação está viva? | Não |
-| `GET /health` | Readiness — as dependências estão disponíveis? | Sim (se configurado) |
+| `GET /ping` | Liveness — is the application alive? | No |
+| `GET /health` | Readiness — are dependencies available? | Yes (if configured) |
 
-`/ping` é um endpoint minimal API simples, sem overhead de dependências. É usado por orquestradores (Kubernetes, Railway, Render) para saber se o processo está rodando.
+`/ping` is a simple minimal API endpoint with no dependency overhead. It is used by orchestrators (Kubernetes, Railway, Render) to know if the process is running.
 
-`/health` usa o sistema de health checks do ASP.NET Core. Em produção, adicione verificação de banco:
+`/health` uses the ASP.NET Core health checks system. In production, add database verification:
 
 ```bash
 dotnet add package AspNetCore.HealthChecks.Npgsql
@@ -547,7 +583,7 @@ builder.Services.AddHealthChecks()
     .AddNpgsql(connectionString, name: "postgresql");
 ```
 
-Resposta de `/health` (JSON customizado):
+`/health` response (custom JSON):
 ```json
 {
   "status": "Healthy",
@@ -557,13 +593,13 @@ Resposta de `/health` (JSON customizado):
 }
 ```
 
-Quando uma dependência falha, `/health` retorna `503 Service Unavailable` com `"status": "Unhealthy"`.
+When a dependency fails, `/health` returns `503 Service Unavailable` with `"status": "Unhealthy"`.
 
 ---
 
-## Autenticação JWT (opcional)
+## JWT Authentication (optional)
 
-Quando a API precisa de autenticação, use **JWT Bearer com HS256**. Adicione ao `Api.csproj`:
+When the API needs authentication, use **JWT Bearer with HS256**. Add to `Api.csproj`:
 
 ```xml
 <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
@@ -572,14 +608,14 @@ Quando a API precisa de autenticação, use **JWT Bearer com HS256**. Adicione a
 `appsettings.json`:
 ```json
 {
-  "Jwt": { "Secret": "seu-secret-min-32-chars-troque-em-producao!" }
+  "Jwt": { "Secret": "your-secret-min-32-chars-replace-in-production!" }
 }
 ```
 
-`Program.cs` — registre o middleware de autenticação e Swagger com suporte a Bearer:
+`Program.cs` — register the authentication middleware and Swagger with Bearer support:
 
 ```csharp
-// Registro
+// Registration
 var jwtSecret = builder.Configuration["Jwt:Secret"]
     ?? throw new InvalidOperationException("JWT secret not configured.");
 
@@ -597,7 +633,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Swagger com Bearer
+// Swagger with Bearer
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -616,12 +652,12 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Middleware (ordem importa — Authentication antes de Authorization)
+// Middleware (order matters — Authentication before Authorization)
 app.UseAuthentication();
 app.UseAuthorization();
 ```
 
-**Geração do token** no `AuthService`:
+**Token generation** in `AuthService`:
 
 ```csharp
 public string GenerateToken(User user)
@@ -642,7 +678,7 @@ public string GenerateToken(User user)
 }
 ```
 
-**Nos controllers** — proteja com `[Authorize]` e leia o ID do usuário via `ClaimTypes.NameIdentifier`:
+**In controllers** — protect with `[Authorize]` and read the user ID via `ClaimTypes.NameIdentifier`:
 
 ```csharp
 [Authorize]
@@ -655,25 +691,25 @@ public async Task<IActionResult> GetAll()
 }
 ```
 
-**Senhas** — nunca armazene texto plano. Use BCrypt:
+**Passwords** — never store plain text. Use BCrypt:
 
 ```xml
 <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 ```
 
 ```csharp
-// Hash ao criar usuário
+// Hash when creating a user
 string hash = BCrypt.Net.BCrypt.HashPassword(plainPassword);
 
-// Verificação no login
+// Verification on login
 bool isValid = BCrypt.Net.BCrypt.Verify(plainPassword, storedHash);
 ```
 
 ---
 
-## Injeção de Dependência
+## Dependency Injection
 
-Cada camada expõe um extension method de registro. O `Program.cs` chama apenas esses dois métodos.
+Each layer exposes a registration extension method. `Program.cs` calls only these two methods.
 
 ```csharp
 // Application/DependencyInjection.cs
@@ -689,7 +725,7 @@ public static IServiceCollection AddInfrastructure(this IServiceCollection servi
     var cs = configuration.GetConnectionString("DefaultConnection")
         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-    // Mapeia snake_case do PostgreSQL para PascalCase do C# automaticamente
+    // Automatically maps PostgreSQL snake_case to C# PascalCase
     DefaultTypeMap.MatchNamesWithUnderscores = true;
 
     services.AddSingleton<IDbConnectionFactory>(_ => new DbConnectionFactory(cs));
@@ -701,9 +737,9 @@ public static IServiceCollection AddInfrastructure(this IServiceCollection servi
 
 ---
 
-## Banco de Dados — PostgreSQL
+## Database — PostgreSQL
 
-O banco padrão para desenvolvimento local é **PostgreSQL 16** rodando via Docker.
+The default database for local development is **PostgreSQL 16** running via Docker.
 
 ### docker-compose.yml
 
@@ -712,7 +748,7 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: minha_db
+      POSTGRES_DB: my_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -720,7 +756,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d minha_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d my_db"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -735,39 +771,39 @@ volumes:
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=minha_db;Username=postgres;Password=postgres"
+    "DefaultConnection": "Host=localhost;Port=5432;Database=my_db;Username=postgres;Password=postgres"
   }
 }
 ```
 
-### Iniciar o banco
+### Starting the database
 
 ```bash
 docker compose up -d
 ```
 
-### Convenções SQL com PostgreSQL
+### SQL conventions with PostgreSQL
 
-| Aspecto | SQL Server | PostgreSQL |
+| Aspect | SQL Server | PostgreSQL |
 |---|---|---|
-| Auto-increment | `INT IDENTITY(1,1)` | `SERIAL` ou `GENERATED ALWAYS AS IDENTITY` |
+| Auto-increment | `INT IDENTITY(1,1)` | `SERIAL` or `GENERATED ALWAYS AS IDENTITY` |
 | Strings | `NVARCHAR(n)` | `VARCHAR(n)` |
-| Data/hora | `DATETIME2` | `TIMESTAMPTZ` |
+| Date/time | `DATETIME2` | `TIMESTAMPTZ` |
 | Boolean | `BIT` (0/1) | `BOOLEAN` (true/false) |
-| Retornar id inserido | `OUTPUT INSERTED.Id` | `RETURNING id` |
-| Paginação | `OFFSET n FETCH NEXT m ROWS ONLY` | `LIMIT m OFFSET n` |
-| Nomes de colunas | PascalCase | **snake_case** (convenção PostgreSQL) |
-| Data atual | `GETUTCDATE()` | `NOW()` |
+| Return inserted id | `OUTPUT INSERTED.Id` | `RETURNING id` |
+| Pagination | `OFFSET n FETCH NEXT m ROWS ONLY` | `LIMIT m OFFSET n` |
+| Column names | PascalCase | **snake_case** (PostgreSQL convention) |
+| Current date | `GETUTCDATE()` | `NOW()` |
 
-O mapeamento automático entre snake_case do banco e PascalCase do C# é feito por `DefaultTypeMap.MatchNamesWithUnderscores = true` na configuração do Dapper.
+The automatic mapping between database snake_case and C# PascalCase is done by `DefaultTypeMap.MatchNamesWithUnderscores = true` in the Dapper configuration.
 
 ---
 
-## Migrações — DbUp
+## Migrations — DbUp
 
-As migrações são arquivos SQL numerados sequencialmente, executados automaticamente na inicialização da aplicação pelo **DbUp**.
+Migrations are sequentially numbered SQL files, executed automatically at application startup by **DbUp**.
 
-### Estrutura
+### Structure
 
 ```
 Infrastructure/
@@ -779,7 +815,7 @@ Infrastructure/
         └── 002_AddPedidosIndex.sql
 ```
 
-Os scripts são embutidos como `EmbeddedResource` no assembly:
+Scripts are embedded as `EmbeddedResource` in the assembly:
 
 ```xml
 <!-- TemperatureApi.Infrastructure.csproj -->
@@ -788,10 +824,10 @@ Os scripts são embutidos como `EmbeddedResource` no assembly:
 </ItemGroup>
 ```
 
-### Interface e implementação
+### Interface and implementation
 
 ```csharp
-// Permite trocar a implementação nos testes (NoOpMigrationRunner)
+// Allows swapping the implementation in tests (NoOpMigrationRunner)
 public interface IMigrationRunner
 {
     void Run();
@@ -817,9 +853,9 @@ public class DbUpMigrationRunner(string connectionString) : IMigrationRunner
 }
 ```
 
-O DbUp armazena em `schemaversions` quais scripts já foram executados — re-execuções são seguras.
+DbUp stores in `schemaversions` which scripts have already been executed — re-runs are safe.
 
-### Template de script de migração
+### Migration script template
 
 ```sql
 -- 001_CreatePedidosTable.sql
@@ -836,13 +872,13 @@ CREATE INDEX IF NOT EXISTS ix_pedidos_is_active  ON pedidos (is_active);
 CREATE INDEX IF NOT EXISTS ix_pedidos_created_at ON pedidos (created_at DESC);
 ```
 
-Regras para scripts de migração:
-- Nome: `NNN_DescricaoEmSnakeCase.sql` — ordena a execução
-- Sempre usar `IF NOT EXISTS` — idempotência
-- Nunca alterar um script já executado — criar novo script
-- Uma migration por feature/tabela
+Migration script rules:
+- Name: `NNN_DescriptionInSnakeCase.sql` — determines execution order
+- Always use `IF NOT EXISTS` — idempotency
+- Never alter an already-executed script — create a new one
+- One migration per feature/table
 
-### NuGet necessários (Infrastructure.csproj)
+### Required NuGet packages (Infrastructure.csproj)
 
 ```xml
 <PackageReference Include="Npgsql" Version="8.0.5" />
@@ -852,12 +888,12 @@ Regras para scripts de migração:
 
 ---
 
-## Repositório — SQL com PostgreSQL
+## Repository — SQL with PostgreSQL
 
-Diferenças em relação ao padrão SQL Server:
+Differences from the SQL Server pattern:
 
 ```csharp
-// INSERT — retorna id com RETURNING
+// INSERT — returns id with RETURNING
 public async Task<int> CreateAsync(Pedido entity, ...)
 {
     const string sql = @"
@@ -869,7 +905,7 @@ public async Task<int> CreateAsync(Pedido entity, ...)
         conn.ExecuteScalarAsync<int>(sql, entity), cancellationToken);
 }
 
-// SELECT paginado — LIMIT / OFFSET
+// Paginated SELECT — LIMIT / OFFSET
 public async Task<(IEnumerable<Pedido>, int)> GetPagedAsync(int page, int pageSize, ...)
 {
     const string sql = @"
@@ -892,7 +928,7 @@ public async Task<(IEnumerable<Pedido>, int)> GetPagedAsync(int page, int pageSi
     }, cancellationToken);
 }
 
-// DELETE — sempre soft delete
+// DELETE — always soft delete
 public async Task<bool> DeleteAsync(int id, ...)
 {
     const string sql = "UPDATE pedidos SET is_active = FALSE, updated_at = @UpdatedAt WHERE id = @Id";
@@ -904,35 +940,35 @@ public async Task<bool> DeleteAsync(int id, ...)
 
 ---
 
-## Testes Automatizados
+## Automated Tests
 
 ### Stack
 
-| Pacote | Versão | Uso |
+| Package | Version | Use |
 |---|---|---|
-| `xunit` | 2.9+ | Framework de testes |
-| `FluentAssertions` | 6.12+ | Asserções legíveis |
+| `xunit` | 2.9+ | Test framework |
+| `FluentAssertions` | 6.12+ | Readable assertions |
 | `NSubstitute` | 5.1+ | Mocks/stubs |
-| `Microsoft.AspNetCore.Mvc.Testing` | 8.0+ | Host de integração in-process |
+| `Microsoft.AspNetCore.Mvc.Testing` | 8.0+ | In-process integration host |
 
-### Estrutura de pastas
+### Folder structure
 
 ```
-tests/{Nome}.Tests/
-├── {Nome}.Tests.csproj
+tests/{Name}.Tests/
+├── {Name}.Tests.csproj
 ├── Unit/
 │   └── Services/
-│       └── {Entidade}ServiceTests.cs
+│       └── {Entity}ServiceTests.cs
 └── Integration/
     ├── ApiFactory.cs
     ├── HealthCheckTests.cs
     └── Controllers/
-        └── {Entidade}sControllerTests.cs
+        └── {Entity}sControllerTests.cs
 ```
 
-### Testes Unitários — Service
+### Unit Tests — Service
 
-Testam o service em isolamento, substituindo o repositório por um mock do NSubstitute.
+Test the service in isolation, replacing the repository with an NSubstitute mock.
 
 ```csharp
 public class PedidoServiceTests
@@ -978,9 +1014,9 @@ public class PedidoServiceTests
 }
 ```
 
-### Testes de Integração — Controller
+### Integration Tests — Controller
 
-Testam o pipeline HTTP completo (middleware, serialização, status codes) sem banco real. O `ApiFactory` substitui toda a infraestrutura de dados por mocks.
+Test the full HTTP pipeline (middleware, serialization, status codes) without a real database. The `ApiFactory` replaces all data infrastructure with mocks.
 
 #### ApiFactory
 
@@ -992,7 +1028,7 @@ public class ApiFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Connection string falsa evita exceção no AddInfrastructure
+        // Fake connection string avoids exception in AddInfrastructure
         builder.ConfigureAppConfiguration((_, config) =>
             config.AddInMemoryCollection(new Dictionary<string, string?>
             { ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test" }));
@@ -1015,7 +1051,7 @@ internal sealed class NoOpMigrationRunner : IMigrationRunner
 }
 ```
 
-#### Testes de Health Check
+#### Health Check Tests
 
 ```csharp
 public class HealthCheckTests : IClassFixture<ApiFactory>
@@ -1050,13 +1086,13 @@ public class HealthCheckTests : IClassFixture<ApiFactory>
 }
 ```
 
-#### Testes de Controller
+#### Controller Tests
 
-> **Atenção — `CancellationToken` nos mocks de integração**
+> **Note — `CancellationToken` in integration mocks**
 >
-> O ASP.NET Core injeta um `CancellationToken` real (vinculado ao ciclo de vida da requisição HTTP) nos parâmetros do controller. O NSubstitute faz matching **exato** de todos os argumentos; se o mock foi configurado com `GetByIdAsync(1)` (que compila como `GetByIdAsync(1, CancellationToken.None)`), ele **não** vai casar com `GetByIdAsync(1, httpContextToken)` e retornará `null` silenciosamente.
+> ASP.NET Core injects a real `CancellationToken` (tied to the HTTP request lifecycle) into controller parameters. NSubstitute does **exact** matching on all arguments; if the mock was configured with `GetByIdAsync(1)` (which compiles as `GetByIdAsync(1, CancellationToken.None)`), it will **not** match `GetByIdAsync(1, httpContextToken)` and will silently return `null`.
 >
-> Use sempre `Arg.Any<CancellationToken>()` em todos os setups de integração. Isso não afeta testes unitários (onde o token passado é `default`).
+> Always use `Arg.Any<CancellationToken>()` in all integration setups. This does not affect unit tests (where the passed token is `default`).
 
 ```csharp
 public class PedidosControllerTests : IClassFixture<ApiFactory>
@@ -1105,77 +1141,79 @@ public class PedidosControllerTests : IClassFixture<ApiFactory>
 }
 ```
 
-#### Requisito no Program.cs
+#### Program.cs requirement
 
-O `Program` precisa ser acessível para `WebApplicationFactory<Program>`. Adicione ao final do arquivo:
+The `Program` class must be accessible to `WebApplicationFactory<Program>`. Add to the end of the file:
 
 ```csharp
 public partial class Program { }
 ```
 
-### Executar os testes
+### Running tests
 
 ```bash
 dotnet test
-dotnet test --filter "Unit"        # apenas unitários
-dotnet test --filter "Integration" # apenas integração
-dotnet test -v normal              # output detalhado
+dotnet test --filter "Unit"        # unit tests only
+dotnet test --filter "Integration" # integration tests only
+dotnet test -v normal              # verbose output
 ```
 
 ---
 
-## Convenções
+## Conventions
 
-| Regra | Detalhe |
+| Rule | Detail |
 |---|---|
-| Soft delete | Sempre `UPDATE is_active = FALSE`. Nunca `DELETE` físico. |
-| `CancellationToken` | Obrigatório em todos os métodos `async`. |
-| Nomes de tabela | Plural em snake_case (`pedidos`). Classe no singular PascalCase (`Pedido`). |
-| Colunas no banco | Sempre snake_case (`created_at`, `is_active`). Dapper mapeia via `MatchNamesWithUnderscores`. |
-| DTOs e Requests | Sempre `record` imutável. |
-| Versão da rota | Sempre prefixar com `api/v1/`. |
-| Banco padrão | PostgreSQL 16 via Docker para dev local. |
-| Migrações | DbUp com scripts `.sql` numerados como `EmbeddedResource`. |
+| Soft delete | Always `UPDATE is_active = FALSE`. Never physical `DELETE`. |
+| `CancellationToken` | Required in all `async` methods. |
+| Table names | Plural snake_case (`pedidos`). Singular PascalCase class name (`Pedido`). |
+| Database columns | Always snake_case (`created_at`, `is_active`). Dapper maps via `MatchNamesWithUnderscores`. |
+| DTOs and Requests | Always immutable `record`. |
+| Route version | Always prefix with `api/v1/`. |
+| Default database | PostgreSQL 16 via Docker for local development. |
+| Migrations | DbUp with numbered `.sql` scripts as `EmbeddedResource`. |
 | NuGet (Infrastructure) | `Dapper 2.1.28`, `Npgsql 8.0.5`, `dbup-postgresql 5.0.18`. |
 | NuGet (Api) | `Swashbuckle.AspNetCore 6.6.2`. |
 | NuGet (Tests) | `xunit 2.9+`, `FluentAssertions 6.12+`, `NSubstitute 5.1+`, `Microsoft.AspNetCore.Mvc.Testing 8.0+`. |
-| Target framework | .NET 8 com `Nullable enable` e `ImplicitUsings enable`. |
+| Target framework | .NET 8 with `Nullable enable` and `ImplicitUsings enable`. |
 
 ---
 
-## Checklist para nova entidade
+## Checklist for a new entity
 
-**Domínio e Application**
-- [ ] `Domain/Models/{Entidade}.cs` com `Id`, `IsActive`, `CreatedAt`, `UpdatedAt`
-- [ ] `Application/DTOs/{Entidade}Dto.cs`
-- [ ] `Application/Requests/Create{Entidade}Request.cs` e `Update{Entidade}Request.cs`
-- [ ] `Application/Interfaces/I{Entidade}Service.cs`
-- [ ] `Application/Services/{Entidade}Service.cs`
+**Domain and Application**
+- [ ] `Domain/Models/{Entity}.cs` with `Id`, `IsActive`, `CreatedAt`, `UpdatedAt`
+- [ ] `Application/DTOs/{Entity}Dto.cs`
+- [ ] `Application/Requests/Create{Entity}Request.cs` and `Update{Entity}Request.cs`
+- [ ] `Application/Interfaces/I{Entity}Service.cs`
+- [ ] `Application/Services/{Entity}Service.cs`
 
 **Infrastructure**
-- [ ] `Application/Interfaces/I{Entidade}Repository.cs` (contrato fica na camada Application, não em Infrastructure)
-- [ ] `Infrastructure/Repositories/{Entidade}Repository.cs` (SQL em snake_case, `RETURNING id`, `LIMIT/OFFSET`)
-- [ ] `Infrastructure/Migrations/Scripts/NNN_Create{Entidade}Table.sql` (como `EmbeddedResource`)
-- [ ] Registrar no DI de Application e Infrastructure
+- [ ] `Application/Interfaces/I{Entity}Repository.cs` (contract lives in Application, not Infrastructure)
+- [ ] `Infrastructure/Repositories/{Entity}Repository.cs` (SQL in snake_case, `RETURNING id`, `LIMIT/OFFSET`)
+- [ ] `Infrastructure/Migrations/Scripts/NNN_Create{Entity}Table.sql` (as `EmbeddedResource`)
+- [ ] Register in Application and Infrastructure DI
 
 **Api**
-- [ ] `Api/Controllers/{Entidade}sController.cs`
-- [ ] `[Produces("application/json")]` e `[ProducesResponseType]` em todos os métodos do controller
+- [ ] `Api/Controllers/{Entity}sController.cs`
+- [ ] `[Produces("application/json")]` and `[ProducesResponseType]` on all controller methods
 
-**Testes**
-- [ ] `tests/.../Unit/Services/{Entidade}ServiceTests.cs` — GetById found/not-found, Create, Update, Delete
-- [ ] `tests/.../Integration/Controllers/{Entidade}sControllerTests.cs` — todos os endpoints HTTP
-- [ ] `tests/.../Integration/HealthCheckTests.cs` — `/ping` e `/health`
+**Tests**
+- [ ] `tests/.../Unit/Services/{Entity}ServiceTests.cs` — GetById found/not-found, Create, Update, Delete
+- [ ] `tests/.../Integration/Controllers/{Entity}sControllerTests.cs` — all HTTP endpoints
+- [ ] `tests/.../Integration/HealthCheckTests.cs` — `/ping` and `/health`
 
-**Infraestrutura local**
-- [ ] `docker-compose.yml` com serviço PostgreSQL (use porta diferente de 5432 se houver outro projeto rodando)
-- [ ] `AddHealthChecks()` em `Program.cs` + endpoints `/ping` e `/health`
-- [ ] Swagger configurado com título e descrição (`SwaggerDoc("v1", ...)`)
-- [ ] `public partial class Program { }` no final de `Program.cs`
+**Local infrastructure**
+- [ ] `docker-compose.yml` with PostgreSQL service (use a port other than 5432 if another project is running)
+- [ ] `Properties/launchSettings.json` with `ASPNETCORE_ENVIRONMENT=Development` and the correct port
+- [ ] `UseHttpsRedirection` guarded with `if (!app.Environment.IsDevelopment())`
+- [ ] `AddHealthChecks()` in `Program.cs` + `/ping` and `/health` endpoints
+- [ ] Swagger configured with title and description (`SwaggerDoc("v1", ...)`)
+- [ ] `public partial class Program { }` at the end of `Program.cs`
 
-**Se a API tiver autenticação**
-- [ ] `JwtBearer` configurado com `TokenValidationParameters` (HS256, sem validação de issuer/audience para APIs internas)
-- [ ] Swagger com `AddSecurityDefinition("Bearer", ...)` + `AddSecurityRequirement`
-- [ ] Senhas armazenadas com BCrypt (nunca texto plano)
-- [ ] Token com `ClaimTypes.NameIdentifier` para ID do usuário
-- [ ] `UseAuthentication()` antes de `UseAuthorization()` no pipeline
+**If the API has authentication**
+- [ ] `JwtBearer` configured with `TokenValidationParameters` (HS256, no issuer/audience validation for internal APIs)
+- [ ] Swagger with `AddSecurityDefinition("Bearer", ...)` + `AddSecurityRequirement`
+- [ ] Passwords stored with BCrypt (never plain text)
+- [ ] Token with `ClaimTypes.NameIdentifier` for user ID
+- [ ] `UseAuthentication()` before `UseAuthorization()` in the pipeline
