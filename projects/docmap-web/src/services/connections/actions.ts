@@ -13,7 +13,8 @@ export function useCreateConnection(projectId: number) {
       api.post<ApiResponse<ConnectionDto>>(`/api/v1/projects/${projectId}/connections`, dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: connectionKeys.lists(projectId) })
-      queryClient.invalidateQueries({ queryKey: documentKeys.lists(projectId) })
+      // Invalidate all document queries (list + detail) — connections modify document content
+      queryClient.invalidateQueries({ queryKey: documentKeys.all(projectId) })
     },
   })
 }
@@ -25,7 +26,8 @@ export function useDeleteConnection(projectId: number) {
     mutationFn: (id: number) => api.delete(`/api/v1/projects/${projectId}/connections/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: connectionKeys.lists(projectId) })
-      queryClient.invalidateQueries({ queryKey: documentKeys.lists(projectId) })
+      // Invalidate all document queries (list + detail) — deletion removes the reference from markdown
+      queryClient.invalidateQueries({ queryKey: documentKeys.all(projectId) })
     },
   })
 }

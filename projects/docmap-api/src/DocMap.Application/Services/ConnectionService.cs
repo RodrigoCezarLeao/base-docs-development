@@ -77,6 +77,12 @@ public class ConnectionService(
     private async Task UpdateSourceReferences(Document sourceDoc, Document targetDoc, CancellationToken cancellationToken)
     {
         var referenceLink = $"- [{targetDoc.Title}]({targetDoc.FilePath})";
+
+        // Skip if the reference already exists — avoids duplicates when the same
+        // connection is created more than once for the same source/target pair.
+        if (sourceDoc.Content.Contains(referenceLink))
+            return;
+
         string newContent;
 
         if (sourceDoc.Content.Contains("## Referências"))
