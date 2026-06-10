@@ -1,8 +1,13 @@
 using System.Reflection;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.IdentityModel.Tokens;
+using TemperatureApi.Api.Logging;
 using TemperatureApi.Api.Middleware;
 using TemperatureApi.Application;
+using TemperatureApi.Application.Logging;
 using TemperatureApi.Infrastructure;
 using TemperatureApi.Infrastructure.Migrations;
 
@@ -18,9 +23,25 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1",
         Description = "Temperature monitoring API."
     });
+    options.AddSecurityDefinition("Bearer", new() { Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http, Scheme = "bearer", BearerFormat = "JWT" });
+    options.AddSecurityRequirement(new() { { new() { Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" } }, [] } });
 });
 
 builder.Services.AddHealthChecks();
+
+var jwtSecret = builder.Configuration["Jwt:Secret"]!;
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
 
 builder.Services.AddCors(options =>
 {
@@ -30,8 +51,16 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-builder.Services.AddApplication();
+builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// File logging: daily delimited files, captured by a custom provider + request middleware.
+builder.Services.AddHttpContextAccessor();
+var logsDir = builder.Configuration["Logging:Directory"]
+    ?? Environment.GetEnvironmentVariable("LOGS_DIR")
+    ?? Path.Combine(builder.Environment.ContentRootPath, "logs");
+builder.Services.AddSingleton(new LogReaderOptions { Directory = logsDir });
+builder.Logging.AddProvider(new FileLoggerProvider(logsDir, new HttpContextAccessor()));
 
 var app = builder.Build();
 
@@ -44,11 +73,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseCors();
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

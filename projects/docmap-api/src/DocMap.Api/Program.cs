@@ -1,7 +1,9 @@
 using System.Reflection;
 using System.Text;
+using DocMap.Api.Logging;
 using DocMap.Api.Middleware;
 using DocMap.Application;
+using DocMap.Application.Logging;
 using DocMap.Infrastructure;
 using DocMap.Infrastructure.Migrations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -43,12 +45,21 @@ builder.Services.AddCors(options =>
 builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// File logging: daily delimited files, captured by a custom provider + request middleware.
+builder.Services.AddHttpContextAccessor();
+var logsDir = builder.Configuration["Logging:Directory"]
+    ?? Environment.GetEnvironmentVariable("LOGS_DIR")
+    ?? Path.Combine(builder.Environment.ContentRootPath, "logs");
+builder.Services.AddSingleton(new LogReaderOptions { Directory = logsDir });
+builder.Logging.AddProvider(new FileLoggerProvider(logsDir, new HttpContextAccessor()));
+
 var app = builder.Build();
 app.Services.GetRequiredService<IMigrationRunner>().Run();
 
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();

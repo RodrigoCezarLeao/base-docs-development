@@ -1,4 +1,5 @@
 using DocMap.Application.Interfaces;
+using DocMap.Application.Logging;
 using DocMap.Application.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<IProjectService, ProjectService>();
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IConnectionService, ConnectionService>();
+        services.AddScoped<ILogReader, LogReaderService>();
         return services;
     }
 }

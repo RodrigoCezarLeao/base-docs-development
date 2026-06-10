@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddSingleton<IDbConnectionFactory>(_ => new DbConnectionFactory(connectionString));
         services.AddSingleton<IMigrationRunner>(_ => new DbUpMigrationRunner(connectionString));
         services.AddScoped<ITemperatureReadingRepository, TemperatureReadingRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
         return services;
     }

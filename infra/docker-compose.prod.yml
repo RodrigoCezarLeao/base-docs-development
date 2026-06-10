@@ -20,9 +20,16 @@ services:
       ConnectionStrings__DefaultConnection: "Host=host.docker.internal;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}"
       Cors__AllowedOrigins: "${CORS_ORIGINS}"
       Jwt__Secret: "${JWT_SECRET:-}"
+      # Daily log files are written here; the host folder is bind-mounted below so
+      # they persist across container churn and are readable by the admin viewer.
+      Logging__Directory: /app/logs
 
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+    # Persist logs on the host at /opt/apps/<project>/logs (created by add-project.sh).
+    volumes:
+      - ./logs:/app/logs
 
     # Published ONLY on loopback, on a per-project host port (API_PORT) so many
     # projects coexist on the same VPS. nginx proxies to it; never exposed publicly.

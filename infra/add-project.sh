@@ -49,7 +49,9 @@ fi
 DB_PASSWORD="$DB_PASSWORD" bash "${SCRIPT_DIR}/setup-postgres.sh" "$DB_NAME" "$DB_USER" "$DB_PASSWORD"
 
 # ── App layout + .env + compose ─────────────────────────────────────────────────
-install -d -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$APP_DIR" "$WEB_DIR"
+# logs/ is bind-mounted into the API container (see docker-compose.prod.yml) so the
+# daily .txt files persist on the host and the admin viewer can read them.
+install -d -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$APP_DIR" "$WEB_DIR" "${APP_DIR}/logs"
 cp "${SCRIPT_DIR}/docker-compose.prod.yml" "${APP_DIR}/docker-compose.yml"
 cp "${SCRIPT_DIR}/deploy-remote.sh" "${APP_DIR}/deploy-remote.sh"
 chmod +x "${APP_DIR}/deploy-remote.sh"

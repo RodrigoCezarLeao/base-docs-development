@@ -15,6 +15,9 @@ public class ApiFactory : WebApplicationFactory<Program>
     public ITemperatureReadingRepository RepositoryMock { get; } =
         Substitute.For<ITemperatureReadingRepository>();
 
+    public IUserRepository UserRepositoryMock { get; } =
+        Substitute.For<IUserRepository>();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         // Fornece connection string falsa para que AddInfrastructure não jogue exceção
@@ -31,9 +34,11 @@ public class ApiFactory : WebApplicationFactory<Program>
             // Substitui serviços de infraestrutura por mocks (sem banco real)
             services.RemoveAll<IDbConnectionFactory>();
             services.RemoveAll<ITemperatureReadingRepository>();
+            services.RemoveAll<IUserRepository>();
             services.RemoveAll<IMigrationRunner>();
 
             services.AddSingleton(RepositoryMock);
+            services.AddSingleton(UserRepositoryMock);
             services.AddSingleton<IMigrationRunner, NoOpMigrationRunner>();
         });
     }

@@ -42,6 +42,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Runtime app log files (daily .txt written by the API's file logger)
+**/logs/
+
 # Package manager locks are intentionally committed — do NOT ignore them
 
 # ─────────────────────────────────────────────

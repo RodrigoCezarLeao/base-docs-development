@@ -1,15 +1,15 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using DocMap.Application.DTOs;
-using DocMap.Application.Interfaces;
-using DocMap.Application.Requests;
-using DocMap.Application.Responses;
-using DocMap.Domain.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using TemperatureApi.Application.DTOs;
+using TemperatureApi.Application.Interfaces;
+using TemperatureApi.Application.Requests;
+using TemperatureApi.Application.Responses;
+using TemperatureApi.Domain.Models;
 
-namespace DocMap.Application.Services;
+namespace TemperatureApi.Application.Services;
 
 public class AuthService(IUserRepository userRepository, IConfiguration configuration) : IAuthService
 {

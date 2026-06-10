@@ -1,4 +1,4 @@
-namespace DocMap.Domain.Models;
+namespace TemperatureApi.Domain.Models;
 
 public class User
 {
