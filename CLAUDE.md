@@ -29,19 +29,26 @@ infra/                  → Deployment templates: provision-vps.sh, compose, ngi
 
 ## Creating a new project from this base
 
-**Backend:** copy `temperature-api/` to a new directory and run the bootstrap script:
+**One command (API + Web):** from the repository root, run the bootstrap script with a kebab-case slug:
+
+```bash
+./create-project.sh orders          # or: product-catalog, etc.
+```
+
+It copies `temperature-api` → `projects/orders-api` and `temperature-web` → `projects/orders-web`, renames the namespace/db/identity (PascalCase namespace `Orders`, package `orders-web`, page title), reassigns local ports (API/PostgreSQL/dev server) so it runs alongside existing projects without collisions, and appends commented deploy stubs to `deploy-{dev,prod}.yml`. The example domain (`TemperatureReading` / `temperature-list`) is **kept as a reference** — follow its pattern for your own entities, then remove it. For JWT, follow the corresponding section in `guidelines/csharp-api.md`.
+
+After running it: add CI jobs for the new project in `.github/workflows/ci.yml` (mirror the temperature jobs) and record its ports in the table below.
+
+**Backend only (alternative):** copy `temperature-api/` manually and run its `rename.sh`:
 
 ```bash
 cp -r projects/temperature-api projects/my-project-api
-cd projects/my-project-api
-bash rename.sh MyProject          # e.g.: OrdersApi, ProductCatalog
+cd projects/my-project-api && bash rename.sh MyProject
 ```
 
-The script replaces namespaces, database name, and Docker volume across all files and automatically renames folders and `.sln`. The example entity (`TemperatureReading`) is kept as a reference — add your entities following the same pattern and remove it when no longer needed. For JWT, follow the corresponding section in `guidelines/csharp-api.md`.
+Make sure new frontends keep `"type":"module"` in `package.json` and `"types":["vite/client"]` in `tsconfig.json` — both are required.
 
-**Frontend:** copy `temperature-web/` and adjust `package.json`. Make sure `"type":"module"` and `"types":["vite/client"]` are present — both are required.
-
-**Deploy:** the API already ships a name-agnostic `Dockerfile`. To host the project, run `infra/provision-vps.sh` once on the VPS, then `infra/add-project.sh <project> <domain> <port>` per project (many projects coexist on one box), and add a job to `.github/workflows/deploy-{dev,prod}.yml`. Manage the box with the `app` CLI. Full procedure and conventions in `guidelines/infra-devops.md`.
+**Deploy:** the API already ships a name-agnostic `Dockerfile`. To host the project, run `infra/provision-vps.sh` once on the VPS, then `infra/add-project.sh <project> <domain> <port>` per project (many projects coexist on one box), and uncomment the project's block in `.github/workflows/deploy-{dev,prod}.yml`. Manage the box with the `app` CLI. Full procedure and conventions in `guidelines/infra-devops.md`.
 
 ## Local ports (convention)
 
