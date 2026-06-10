@@ -39,5 +39,20 @@
     "deleteNode": "Excluir nó",
     "deleteEdge": "Excluir conexão",
     "noSelection": "Clique em um nó para editar"
+  },
+  "logs": {
+    "nav": "Logs",
+    "title": "Logs do sistema",
+    "back": "Voltar",
+    "date": "Dia",
+    "level": "Nível",
+    "allLevels": "Todos",
+    "search": "Buscar",
+    "searchPlaceholder": "Filtrar na mensagem...",
+    "timestamp": "Horário",
+    "category": "Categoria",
+    "user": "Usuário",
+    "message": "Mensagem",
+    "empty": "Nenhum registro para os filtros."
   }
 }

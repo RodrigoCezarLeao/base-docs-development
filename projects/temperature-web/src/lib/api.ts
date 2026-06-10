@@ -1,6 +1,8 @@
 // Centralized HTTP client built on the native fetch API (no axios dependency).
 // `api` is typed as ApiInstance so methods return Promise<T> — the parsed JSON body —
 // directly, with no casts in services. Non-2xx responses reject with the parsed body.
+// The JWT (when present) is attached as a Bearer token on every request.
+import { tokenStorage } from './auth'
 
 const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
 
@@ -29,9 +31,14 @@ function buildUrl(url: string, params?: RequestConfig['params']): string {
 }
 
 async function request<T>(method: string, url: string, data?: unknown, config?: RequestConfig): Promise<T> {
+  const token = tokenStorage.get()
   const response = await fetch(buildUrl(url, config?.params), {
     method,
-    headers: { 'Content-Type': 'application/json', ...config?.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...config?.headers,
+    },
     body: data === undefined ? undefined : JSON.stringify(data),
     signal: config?.signal,
   })

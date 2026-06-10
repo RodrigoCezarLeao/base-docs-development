@@ -5,7 +5,8 @@
     "save": "Save",
     "cancel": "Cancel",
     "add": "Add",
-    "noData": "No data found"
+    "noData": "No data found",
+    "logout": "Logout"
   },
   "temperature": {
     "title": "Temperature Monitor",
@@ -16,5 +17,32 @@
     "filterByLocation": "Filter by location",
     "celsius": "°C",
     "readingAdded": "Reading added successfully"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "loginTitle": "Sign in",
+    "registerTitle": "Create account",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginError": "Invalid email or password"
+  },
+  "logs": {
+    "nav": "Logs",
+    "title": "System logs",
+    "back": "Back",
+    "date": "Day",
+    "level": "Level",
+    "allLevels": "All",
+    "search": "Search",
+    "searchPlaceholder": "Filter the message...",
+    "timestamp": "Time",
+    "category": "Category",
+    "user": "User",
+    "message": "Message",
+    "empty": "No entries for these filters."
   }
 }

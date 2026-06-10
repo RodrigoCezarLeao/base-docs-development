@@ -5,7 +5,8 @@
     "save": "Salvar",
     "cancel": "Cancelar",
     "add": "Adicionar",
-    "noData": "Nenhum dado encontrado"
+    "noData": "Nenhum dado encontrado",
+    "logout": "Sair"
   },
   "temperature": {
     "title": "Monitor de Temperatura",
@@ -16,5 +17,32 @@
     "filterByLocation": "Filtrar por local",
     "celsius": "°C",
     "readingAdded": "Leitura adicionada com sucesso"
+  },
+  "auth": {
+    "login": "Entrar",
+    "register": "Cadastrar",
+    "email": "E-mail",
+    "password": "Senha",
+    "name": "Nome",
+    "loginTitle": "Entrar",
+    "registerTitle": "Criar conta",
+    "noAccount": "Não tem conta?",
+    "hasAccount": "Já tem conta?",
+    "loginError": "E-mail ou senha incorretos"
+  },
+  "logs": {
+    "nav": "Logs",
+    "title": "Logs do sistema",
+    "back": "Voltar",
+    "date": "Dia",
+    "level": "Nível",
+    "allLevels": "Todos",
+    "search": "Buscar",
+    "searchPlaceholder": "Filtrar na mensagem...",
+    "timestamp": "Horário",
+    "category": "Categoria",
+    "user": "Usuário",
+    "message": "Mensagem",
+    "empty": "Nenhum registro para os filtros."
   }
 }

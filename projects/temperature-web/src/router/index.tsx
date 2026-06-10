@@ -1,18 +1,15 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { lazy } from 'react'
+import { HomePage } from '@/pages/home'
 
 const LoginPage = lazy(() => import('@/pages/login'))
 const RegisterPage = lazy(() => import('@/pages/register'))
-const ProjectsPage = lazy(() => import('@/pages/projects'))
-const CanvasPage = lazy(() => import('@/pages/canvas'))
 const AdminLogsPage = lazy(() => import('@/pages/admin-logs'))
 
 const router = createBrowserRouter([
-  { path: '/', element: <Navigate to="/projects" replace /> },
+  { path: '/', element: <HomePage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
-  { path: '/projects', element: <ProjectsPage /> },
-  { path: '/canvas/:projectId', element: <CanvasPage /> },
   { path: '/admin/logs', element: <AdminLogsPage /> },
 ])
 

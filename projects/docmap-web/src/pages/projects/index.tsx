@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/stores/auth/hooks'
 import { useProjects } from '@/services/projects/queries'
@@ -9,7 +9,8 @@ import { Spinner } from '@/components/ui/Spinner'
 
 export default function ProjectsPage() {
   const { t } = useTranslation()
-  const { isAuthenticated, logout } = useAuth()
+  const navigate = useNavigate()
+  const { isAuthenticated, isAdmin, logout } = useAuth()
   const { data: projects = [], isLoading } = useProjects()
   const [showModal, setShowModal] = useState(false)
 
@@ -25,6 +26,11 @@ export default function ProjectsPage() {
           <Button onClick={() => setShowModal(true)}>
             {t('projects.create')}
           </Button>
+          {isAdmin && (
+            <Button variant="secondary" onClick={() => navigate('/admin/logs')}>
+              {t('logs.nav')}
+            </Button>
+          )}
           <Button variant="secondary" onClick={logout}>
             {t('common.logout')}
           </Button>

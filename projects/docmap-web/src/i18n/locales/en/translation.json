@@ -39,5 +39,20 @@
     "deleteNode": "Delete node",
     "deleteEdge": "Delete connection",
     "noSelection": "Click a node to edit"
+  },
+  "logs": {
+    "nav": "Logs",
+    "title": "System logs",
+    "back": "Back",
+    "date": "Day",
+    "level": "Level",
+    "allLevels": "All",
+    "search": "Search",
+    "searchPlaceholder": "Filter the message...",
+    "timestamp": "Time",
+    "category": "Category",
+    "user": "User",
+    "message": "Message",
+    "empty": "No entries for these filters."
   }
 }
