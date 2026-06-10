@@ -10,9 +10,7 @@ export function useCreateTemperature() {
 
   return useMutation({
     mutationFn: (dto: CreateTemperatureReadingDto) =>
-      api.post<ApiResponse<TemperatureReading>>('/api/v1/temperaturereadings', dto) as Promise<
-        ApiResponse<TemperatureReading>
-      >,
+      api.post<ApiResponse<TemperatureReading>>('/api/v1/temperaturereadings', dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: temperatureKeys.lists() })
       toast.success('Leitura registrada com sucesso.')
