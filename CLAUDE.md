@@ -39,6 +39,14 @@ It copies `temperature-api` → `projects/orders-api` and `temperature-web` → 
 
 After running it: add CI jobs for the new project in `.github/workflows/ci.yml` (mirror the temperature jobs) and record its ports in the table below.
 
+**Eject to a standalone repo:** to spin a project out of this base into its own directory/repository (instead of inside `projects/`), run:
+
+```bash
+./eject-project.sh orders ../orders     # <slug> <target-dir>
+```
+
+It produces a flat, self-contained repo (`api/`, `web/`, `infra/`, `.github/workflows/`, `guidelines/`), renames the identity, wires the workflows to the flat layout, and runs `git init` + initial commit on `master`. Then `git remote add origin … && git push`, set `ENABLE_DEPLOY=true`, and follow `guidelines/infra-devops.md`.
+
 **Backend only (alternative):** copy `temperature-api/` manually and run its `rename.sh`:
 
 ```bash
