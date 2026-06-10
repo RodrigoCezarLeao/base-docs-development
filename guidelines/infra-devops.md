@@ -234,14 +234,23 @@ is generated from [`infra/nginx-site.conf.template`](../infra/nginx-site.conf.te
 
 ## CI/CD pipeline
 
+> **This base repo vs. a project repo.** Everything here — the deploy workflows, branch
+> protection, environments — is meant for the **project repos created from this base**,
+> not the base itself. The base only carries them as ready-to-use templates. So the
+> deploy workflows are **gated**: each deploy job runs only when the repository variable
+> `ENABLE_DEPLOY` is `"true"` (Settings → Secrets and variables → Actions → Variables).
+> The base leaves it unset (deploy jobs are skipped, no failed runs); a project repo sets
+> it to `true` to turn deployment on. `ci.yml` is **not** gated — it validates the
+> templates in the base too.
+
 Three workflows under `.github/workflows/`:
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | any push / PR to `master`,`develop` | lint + test + **build** (BE and FE) — quality gate |
+| `ci.yml` | any push / PR to `master`,`develop` | lint + test + **build** (BE and FE) — quality gate, always on |
 | `deploy.yml` | `workflow_call` | reusable: build image → GHCR, build FE, ship to VPS |
-| `deploy-dev.yml` | push to `develop` | calls `deploy.yml` with `environment: dev` |
-| `deploy-prod.yml` | push to `master` | calls `deploy.yml` with `environment: production` |
+| `deploy-dev.yml` | push to `develop`, if `ENABLE_DEPLOY` | calls `deploy.yml` with `environment: dev` |
+| `deploy-prod.yml` | push to `master`, if `ENABLE_DEPLOY` | calls `deploy.yml` with `environment: production` |
 
 **Artifact flow** (the VPS never compiles):
 
@@ -260,17 +269,16 @@ Three workflows under `.github/workflows/`:
 `deploy.yml` with that project's inputs (see the commented `docmap` block in
 `deploy-dev.yml`). Each project typically targets its own VPS.
 
-### Branch strategy & protection
+### Branch strategy & protection (in the project repo)
 
-- `master` = production, `develop` = dev. Both are **protected**: no direct pushes,
-  changes land only via PR from feature branches.
-- Configure in GitHub (Settings → Branches) for both branches: require a PR, require the
-  `ci.yml` status checks to pass, require ≥1 review, block force-push.
-- The `production` Environment (Settings → Environments) should set **Required reviewers**,
-  so a prod deploy pauses for a manual click.
+Apply these in each **project repo** created from the base — not in the base itself:
 
-> **Pre-requisite:** the repository's default branch must be `master`, with a `develop`
-> branch created from it. (This base currently ships on a `claude/*` branch.)
+- `master` = production (default branch), `develop` = dev, created from `master`.
+- Both **protected** (Settings → Branches): require a PR, require the `ci.yml` status
+  checks, require ≥1 review, block force-push — so code lands only via PR.
+- Set the repository variable `ENABLE_DEPLOY=true` to activate the deploy workflows.
+- Create the `dev` and `production` Environments (Settings → Environments); give
+  `production` **Required reviewers** so a prod deploy pauses for a manual click.
 
 ---
 

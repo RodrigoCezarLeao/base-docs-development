@@ -1,6 +1,11 @@
 # Auto-deploy to PROD on every merge into master.
 # master is a protected branch — code only lands here via PR.
 #
+# This is a TEMPLATE. It stays inert until the repository variable ENABLE_DEPLOY
+# is set to "true" (Settings → Secrets and variables → Actions → Variables). The
+# base repo leaves it unset, so the deploy jobs are skipped here; a project repo
+# created from this base sets it to activate deployment.
+#
 # The 'production' GitHub Environment should require manual approval (Settings →
 # Environments → production → Required reviewers), so prod deploys wait for a click.
 
@@ -12,6 +17,7 @@ on:
 
 jobs:
   temperature:
+    if: vars.ENABLE_DEPLOY == 'true'
     uses: ./.github/workflows/deploy.yml
     with:
       environment: production
