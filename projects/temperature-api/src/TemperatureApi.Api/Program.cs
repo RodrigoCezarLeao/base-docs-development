@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using TemperatureApi.Api.Middleware;
@@ -51,6 +52,17 @@ if (!app.Environment.IsDevelopment())
 app.UseAuthorization();
 app.MapControllers();
 
+// App version (manual SemVer from <Version>) + build metadata (set by CI via env).
+var appVersion = (Assembly.GetExecutingAssembly()
+        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        ?? "0.0.0").Split('+')[0];
+var appCommit = Environment.GetEnvironmentVariable("APP_COMMIT") ?? "local";
+var appBuiltAt = Environment.GetEnvironmentVariable("APP_BUILD_TIME") ?? "unknown";
+
+// Version/build info
+app.MapGet("/version", () => Results.Ok(new { name = "Temperature API", version = appVersion, commit = appCommit, builtAt = appBuiltAt }))
+   .ExcludeFromDescription();
+
 // Liveness — responds immediately, no dependency checks
 app.MapGet("/ping", () => Results.Ok(new { status = "ok" }))
    .ExcludeFromDescription();
@@ -64,6 +76,8 @@ app.MapHealthChecks("/health", new HealthCheckOptions
         var result = System.Text.Json.JsonSerializer.Serialize(new
         {
             status = report.Status.ToString(),
+            version = appVersion,
+            commit = appCommit,
             checks = report.Entries.Select(e => new
             {
                 name = e.Key,

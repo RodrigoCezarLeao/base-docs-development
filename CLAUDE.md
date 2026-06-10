@@ -25,6 +25,7 @@ projects/
   docmap-web/           → Showcase — React Flow canvas, Zustand persist, side panel editor
 
 infra/                  → Deployment templates: provision-vps.sh, compose, nginx, .env (see infra-devops.md)
+VERSIONING.md           → Versioning scheme (manual SemVer) + deploy/release plan
 ```
 
 ## Creating a new project from this base
@@ -103,6 +104,11 @@ Use different ports to avoid conflicts when running multiple projects at the sam
 - `mockReset()` in `beforeEach` (not `mockClear`) — also clears implementations
 - `mockRejectedValueOnce()` (not `mockRejectedValue`) — Vitest 2.x detects the permanent variant as unhandled rejection
 - `return await` in async service functions — correct error propagation
+
+**Versioning (manual SemVer, per app — see `VERSIONING.md`):**
+- API version = `<Version>` in `Directory.Build.props`; surfaced at `GET /version` and `/health`
+- Frontend version = `"version"` in `package.json`; shown in the bottom-left badge (`VersionBadge`)
+- Commit + build time are injected by CI (build-args / `VITE_APP_*`); each app keeps a `CHANGELOG.md`
 
 ## Quick commands
 

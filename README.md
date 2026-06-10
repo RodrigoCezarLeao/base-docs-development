@@ -16,7 +16,7 @@ This repo is a **template**. Two scripts bootstrap a full-stack project (API + W
 ./eject-project.sh  orders ../orders   # → ../orders as its own git repository
 ```
 
-Conventions: `CLAUDE.md`. Deployment: `guidelines/infra-devops.md`.
+Conventions: `CLAUDE.md`. Deployment: `guidelines/infra-devops.md`. Versioning & releases: `VERSIONING.md`.
 
 ---
 

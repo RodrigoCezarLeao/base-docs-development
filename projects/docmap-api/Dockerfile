@@ -31,9 +31,15 @@ USER app
 
 COPY --from=build --chown=app:app /app/publish .
 
+# Build metadata (passed by CI via --build-arg) — surfaced at /version and /health.
+ARG APP_COMMIT=local
+ARG APP_BUILD_TIME=unknown
+
 ENV ASPNETCORE_URLS=http://+:8080 \
     ASPNETCORE_ENVIRONMENT=Production \
-    DOTNET_GCHeapHardLimitPercent=50
+    DOTNET_GCHeapHardLimitPercent=50 \
+    APP_COMMIT=$APP_COMMIT \
+    APP_BUILD_TIME=$APP_BUILD_TIME
 
 EXPOSE 8080
 

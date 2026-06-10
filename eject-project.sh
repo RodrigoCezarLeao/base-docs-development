@@ -68,6 +68,7 @@ sed -i "s|<title>.*</title>|<title>${TITLE}</title>|" "$TARGET_ABS/web/index.htm
 # ── Guideline + .gitignore ──────────────────────────────────────────────────────
 mkdir -p "$TARGET_ABS/guidelines"
 cp guidelines/infra-devops.md "$TARGET_ABS/guidelines/infra-devops.md"
+[[ -f VERSIONING.md ]] && cp VERSIONING.md "$TARGET_ABS/VERSIONING.md"
 [[ -f .gitignore ]] && cp .gitignore "$TARGET_ABS/.gitignore"
 
 # ── Workflows wired to the flat api/ + web/ layout ──────────────────────────────

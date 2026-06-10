@@ -269,6 +269,15 @@ Three workflows under `.github/workflows/`:
 `deploy.yml` with that project's inputs (see the commented `docmap` block in
 `deploy-dev.yml`). Each project typically targets its own VPS.
 
+### Versioning & build metadata
+
+The pipeline injects build metadata so every deploy is identifiable: the backend image
+gets `APP_COMMIT` / `APP_BUILD_TIME` as Docker build-args (→ env → `GET /version` and
+`/health`), and the frontend build gets `VITE_APP_COMMIT` / `VITE_APP_BUILD_TIME` (→ the
+corner version badge). The human-readable version is manual SemVer per app
+(`Directory.Build.props` for the API, `package.json` for the frontend). The full scheme
+and the release/update flow live in [`VERSIONING.md`](../VERSIONING.md).
+
 ### Branch strategy & protection (in the project repo)
 
 Apply these in each **project repo** created from the base — not in the base itself:

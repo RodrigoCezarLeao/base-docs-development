@@ -9,5 +9,11 @@
       the lockfile (equivalent to pnpm install with frozen-lockfile).
     -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+
+    <!--
+      Manual SemVer — single source of truth for this project's version.
+      Bump on every release (see VERSIONING.md). Surfaced at GET /version and /health.
+    -->
+    <Version>0.1.0</Version>
   </PropertyGroup>
 </Project>

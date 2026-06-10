@@ -5,6 +5,7 @@ import { queryClient } from '@/lib/queryClient'
 import '@/i18n'
 import '@/styles/global.css'
 import { Router } from '@/router'
+import { VersionBadge } from '@/components/ui/VersionBadge'
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
       <Suspense fallback={<div>Loading...</div>}>
         <Router />
       </Suspense>
+      <VersionBadge />
       {import.meta.env.DEV && <ReactQueryDevtools />}
     </QueryClientProvider>
   )

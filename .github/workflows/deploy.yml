@@ -55,6 +55,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build metadata
+        id: build
+        run: echo "time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
       - uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.api_path }}
@@ -62,6 +66,9 @@ jobs:
           tags: |
             ${{ steps.meta.outputs.image }}:${{ github.sha }}
             ${{ steps.meta.outputs.image }}:${{ inputs.environment }}
+          build-args: |
+            APP_COMMIT=${{ github.sha }}
+            APP_BUILD_TIME=${{ steps.build.outputs.time }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -71,6 +78,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Build metadata
+        id: build
+        run: echo "time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
       - uses: pnpm/action-setup@v4
         with:
           version: 11
@@ -83,6 +93,8 @@ jobs:
         working-directory: ${{ inputs.web_path }}
         env:
           VITE_API_URL: ${{ inputs.api_base_url }}
+          VITE_APP_COMMIT: ${{ github.sha }}
+          VITE_APP_BUILD_TIME: ${{ steps.build.outputs.time }}
         run: |
           pnpm install --frozen-lockfile
           pnpm build
