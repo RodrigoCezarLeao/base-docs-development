@@ -16,12 +16,15 @@ Serves as a starting point for new projects. When starting a session:
 guidelines/
   csharp-api.md         → REST API C# .NET 8 + Dapper + PostgreSQL + DbUp + tests
   react-frontend.md     → React + TypeScript + Vite 5 + Tailwind v4 + React Query + Zustand + Vitest
+  infra-devops.md       → VPS provisioning + CI/CD: Docker, GHCR, Tailscale, nginx, HTTPS, DEV/PROD
 
 projects/
   temperature-api/      → Reference backend — simple CRUD, no auth
   temperature-web/      → Reference frontend — listing, form, tests
   docmap-api/           → Showcase — JWT, multiple related resources, zip export
   docmap-web/           → Showcase — React Flow canvas, Zustand persist, side panel editor
+
+infra/                  → Deployment templates: provision-vps.sh, compose, nginx, .env (see infra-devops.md)
 ```
 
 ## Creating a new project from this base
@@ -37,6 +40,8 @@ bash rename.sh MyProject          # e.g.: OrdersApi, ProductCatalog
 The script replaces namespaces, database name, and Docker volume across all files and automatically renames folders and `.sln`. The example entity (`TemperatureReading`) is kept as a reference — add your entities following the same pattern and remove it when no longer needed. For JWT, follow the corresponding section in `guidelines/csharp-api.md`.
 
 **Frontend:** copy `temperature-web/` and adjust `package.json`. Make sure `"type":"module"` and `"types":["vite/client"]` are present — both are required.
+
+**Deploy:** the API already ships a name-agnostic `Dockerfile`. To host the project, run `infra/provision-vps.sh` once on the VPS, then `infra/add-project.sh <project> <domain> <port>` per project (many projects coexist on one box), and add a job to `.github/workflows/deploy-{dev,prod}.yml`. Manage the box with the `app` CLI. Full procedure and conventions in `guidelines/infra-devops.md`.
 
 ## Local ports (convention)
 

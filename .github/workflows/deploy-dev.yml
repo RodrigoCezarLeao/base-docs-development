@@ -1,0 +1,32 @@
+# Auto-deploy to DEV on every merge into develop.
+# develop is a protected branch — code only lands here via PR.
+#
+# Edit the domains/paths below for your project. To deploy more than one project,
+# add another job that calls ./.github/workflows/deploy.yml with its own inputs.
+
+name: Deploy DEV
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  temperature:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: dev
+      project: temperature
+      api_path: projects/temperature-api
+      web_path: projects/temperature-web
+      api_base_url: https://dev.example.com
+    secrets: inherit
+
+  # docmap:
+  #   uses: ./.github/workflows/deploy.yml
+  #   with:
+  #     environment: dev
+  #     project: docmap
+  #     api_path: projects/docmap-api
+  #     web_path: projects/docmap-web
+  #     api_base_url: https://docmap-dev.example.com
+  #   secrets: inherit

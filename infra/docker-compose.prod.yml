@@ -1,0 +1,49 @@
+# Production stack for a SINGLE API service.
+#
+#   - The frontend is NOT here: it is a static build served by the host nginx.
+#   - PostgreSQL is NOT here: it runs on the HOST. The container reaches it via
+#     host.docker.internal (mapped to the docker bridge gateway below).
+#
+# Values come from the .env file sitting next to this compose file on the VPS.
+# Deployed to /opt/apps/<project>/docker-compose.yml. See guidelines/infra-devops.md.
+
+services:
+  api:
+    image: ghcr.io/${GHCR_OWNER}/${PROJECT}-api:${IMAGE_TAG:-latest}
+    container_name: ${PROJECT}-api
+    restart: unless-stopped
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: "http://+:8080"
+      # PostgreSQL lives on the host — reach it through the bridge gateway.
+      ConnectionStrings__DefaultConnection: "Host=host.docker.internal;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}"
+      Cors__AllowedOrigins: "${CORS_ORIGINS}"
+      Jwt__Secret: "${JWT_SECRET:-}"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Published ONLY on loopback, on a per-project host port (API_PORT) so many
+    # projects coexist on the same VPS. nginx proxies to it; never exposed publicly.
+    ports:
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+
+    # Hard memory ceiling: a leak gets the container OOM-killed and restarted
+    # instead of taking the whole VPS down with it.
+    mem_limit: 512m
+    mem_reservation: 256m
+
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+    # Cap log growth so disk never fills from container stdout.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

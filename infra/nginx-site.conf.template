@@ -1,0 +1,54 @@
+# nginx site for __PROJECT__ (__DOMAIN__).
+#
+# Generated from this template by provision-vps.sh into
+# /etc/nginx/sites-available/__PROJECT__ (placeholders replaced).
+#
+# Serves the static frontend build and reverse-proxies the API container.
+# certbot --nginx adds the listen 443 / ssl_* block and the 80→443 redirect.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name __DOMAIN__;
+
+    # Static SPA build — deployed by CI via rsync to this directory.
+    root /var/www/__PROJECT__;
+    index index.html;
+
+    # Proxy defaults inherited by every proxied location below.
+    proxy_http_version 1.1;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # API routes (controllers live under /api/v1/...). No path rewrite: the
+    # backend already owns the /api prefix, so forward the URI untouched.
+    # __API_PORT__ is this project's dedicated loopback port (set by add-project.sh).
+    location /api/ {
+        proxy_pass http://127.0.0.1:__API_PORT__;
+    }
+
+    # Health/liveness endpoints exposed at the root by the API.
+    location = /ping {
+        proxy_pass http://127.0.0.1:__API_PORT__;
+    }
+    location = /health {
+        proxy_pass http://127.0.0.1:__API_PORT__;
+    }
+
+    # Everything else is the SPA — fall back to index.html for client routing.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Long-cache hashed assets, never cache the HTML shell.
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+}

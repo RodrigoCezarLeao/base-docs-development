@@ -1,0 +1,32 @@
+# Auto-deploy to PROD on every merge into master.
+# master is a protected branch — code only lands here via PR.
+#
+# The 'production' GitHub Environment should require manual approval (Settings →
+# Environments → production → Required reviewers), so prod deploys wait for a click.
+
+name: Deploy PROD
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  temperature:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: production
+      project: temperature
+      api_path: projects/temperature-api
+      web_path: projects/temperature-web
+      api_base_url: https://example.com
+    secrets: inherit
+
+  # docmap:
+  #   uses: ./.github/workflows/deploy.yml
+  #   with:
+  #     environment: production
+  #     project: docmap
+  #     api_path: projects/docmap-api
+  #     web_path: projects/docmap-web
+  #     api_base_url: https://docmap.example.com
+  #   secrets: inherit

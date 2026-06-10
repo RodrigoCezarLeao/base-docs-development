@@ -114,12 +114,15 @@ Then open `http://localhost:5173`.
 guidelines/
   csharp-api.md       → REST API patterns: C# .NET 8 + Dapper + PostgreSQL
   react-frontend.md   → Frontend patterns: React + TypeScript + Vite + Tailwind
+  infra-devops.md     → Deployment: VPS provisioning, Docker, CI/CD, nginx, HTTPS
 
 projects/
   temperature-api/    → Reference backend (simple CRUD, no auth)
   temperature-web/    → Reference frontend (listing, form, tests)
   docmap-api/         → Showcase (JWT, related resources, zip export)
   docmap-web/         → Showcase (React Flow, Zustand persist, side panel)
+
+infra/                → VPS provisioning & deploy templates (see guidelines/infra-devops.md)
 ```
 
 See `CLAUDE.md` for conventions and instructions for creating new projects from this base.

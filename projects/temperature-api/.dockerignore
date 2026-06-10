@@ -1,0 +1,13 @@
+# Build output and local state — keep the build context small and reproducible.
+**/bin/
+**/obj/
+**/.vs/
+tests/
+
+# Local infra / docs — not needed inside the image.
+docker-compose*.yml
+*.md
+.env
+.env.*
+.git
+.gitignore

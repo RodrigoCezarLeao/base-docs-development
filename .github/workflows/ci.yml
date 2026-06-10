@@ -4,7 +4,7 @@ on:
   push:
     branches: ["**"]
   pull_request:
-    branches: [main]
+    branches: [master, develop]
 
 jobs:
   # ── Frontend: temperature-web ──────────────────────────────────────────────
@@ -31,6 +31,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm test:run
+      - run: pnpm build
 
   # ── Frontend: docmap-web ───────────────────────────────────────────────────
   test-docmap-web:
@@ -56,6 +57,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm test:run
+      - run: pnpm build
 
   # ── Backend: temperature-api ───────────────────────────────────────────────
   test-temperature-api:
