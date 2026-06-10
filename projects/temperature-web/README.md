@@ -59,7 +59,7 @@ src/
 │   └── temperature-list/   → componentes, hook e exports da feature
 ├── helpers/                → funções puras + testes unitários
 ├── i18n/                   → locales pt-BR e en
-├── lib/                    → queryClient, api (axios), cn (tailwind-merge)
+├── lib/                    → queryClient, api (fetch), cn (tailwind-merge)
 ├── pages/home/             → página raiz
 ├── services/temperatures/  → types, keys, queries, actions (React Query)
 ├── stores/temperature/     → types, store, selectors, hooks (Zustand)

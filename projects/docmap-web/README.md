@@ -52,7 +52,7 @@ src/
   features/            # Feature-scoped components
     canvas/            # React Flow canvas, DocumentNode, DocumentSidePanel, CanvasToolbar
   lib/
-    api.ts             # Typed axios instance
+    api.ts             # Typed fetch client (ApiInstance)
   pages/               # Route-level components (Login, Register, Projects, Canvas)
   router/              # React Router configuration
   services/            # API service layer

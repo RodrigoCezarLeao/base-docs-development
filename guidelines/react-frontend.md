@@ -20,7 +20,7 @@ This document defines the organization and development standard for React fronte
 | ESLint | 9 | Linter (flat config) |
 | Vitest + Testing Library | 2.x | Unit tests |
 | `@vitest/coverage-v8` | 2.x | Code coverage |
-| axios | 1.x | HTTP client |
+| (native `fetch`) | — | HTTP client — no axios/HTTP dependency |
 
 ### Required configuration
 
@@ -66,7 +66,7 @@ src/
 │   │       └── translation.json
 │   └── index.ts               → i18next configuration
 ├── lib/
-│   ├── api.ts                 → typed axios instance (ApiInstance) + response interceptor
+│   ├── api.ts                 → typed fetch client (ApiInstance) — returns Promise<T>
 │   ├── queryClient.ts         → global QueryClient instance and configuration
 │   └── cn.ts                  → helper for merging Tailwind classes (clsx + tailwind-merge)
 ├── services/
@@ -483,58 +483,75 @@ const { user } = useAuth()
 
 ---
 
-## API Client (Axios)
+## API Client (fetch)
 
-All backend communication goes through a centralized axios instance in `src/lib/api.ts`.
-
-The response interceptor automatically extracts `.data` from each `AxiosResponse`. For TypeScript to understand this without requiring casts in every service, the exported object is typed with `ApiInstance` — a type that declares the methods returning `Promise<T>` directly:
+All backend communication goes through a centralized HTTP client in `src/lib/api.ts`,
+built on the **native `fetch` API** — no axios (or any) HTTP dependency. It is typed as
+`ApiInstance`, whose methods return `Promise<T>` (the parsed JSON body) directly, so
+services need **no casts**:
 
 ```typescript
 // src/lib/api.ts
-import axios from 'axios'
+const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
 
-// Tells TypeScript the interceptor already extracted .data —
-// services receive T directly, without AxiosResponse<T>.
-type ApiInstance = {
-  get<T>(url: string, config?: object): Promise<T>
-  post<T>(url: string, data?: unknown, config?: object): Promise<T>
-  put<T>(url: string, data?: unknown, config?: object): Promise<T>
-  patch<T>(url: string, data?: unknown, config?: object): Promise<T>
-  delete<T>(url: string, config?: object): Promise<T>
+export type RequestConfig = {
+  params?: Record<string, string | number | boolean | undefined | null>
+  headers?: Record<string, string>
+  signal?: AbortSignal
 }
 
-const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5000',
-  headers: { 'Content-Type': 'application/json' },
-})
+type ApiInstance = {
+  get<T>(url: string, config?: RequestConfig): Promise<T>
+  post<T>(url: string, data?: unknown, config?: RequestConfig): Promise<T>
+  put<T>(url: string, data?: unknown, config?: RequestConfig): Promise<T>
+  patch<T>(url: string, data?: unknown, config?: RequestConfig): Promise<T>
+  delete<T>(url: string, config?: RequestConfig): Promise<T>
+}
 
-axiosInstance.interceptors.response.use(
-  (response) => response.data,
-  (error) => Promise.reject(error),
-)
+async function request<T>(method: string, url: string, data?: unknown, config?: RequestConfig): Promise<T> {
+  const response = await fetch(buildUrl(url, config?.params), {
+    method,
+    headers: { 'Content-Type': 'application/json', ...config?.headers },
+    body: data === undefined ? undefined : JSON.stringify(data),
+    signal: config?.signal,
+  })
+  const text = await response.text()
+  const body = text ? JSON.parse(text) : undefined
+  if (!response.ok) return Promise.reject(body ?? new Error(`HTTP ${response.status}`))
+  return body as T
+}
 
-export const api = axiosInstance as unknown as ApiInstance
+export const api: ApiInstance = {
+  get: <T>(url: string, config?: RequestConfig) => request<T>('GET', url, undefined, config),
+  post: <T>(url: string, data?: unknown, config?: RequestConfig) => request<T>('POST', url, data, config),
+  // put / patch / delete follow the same one-line pattern
+}
 ```
 
-With this, services call `api.get<T>()` and receive `Promise<T>` — with no casts:
+(`buildUrl` appends `config.params` as a query string.) Services then call `api.get<T>()`
+and receive `Promise<T>` — with no casts:
 
 ```typescript
 // ✅ No cast — api.get<ApiResponse<Order>> returns Promise<ApiResponse<Order>>
 const order = await api.get<ApiResponse<Order>>('/orders/1')
-
-// ❌ Without ApiInstance — TypeScript would report a type error
-const order = await axiosInstance.get<ApiResponse<Order>>('/orders/1') // AxiosResponse<...>, not ApiResponse<...>
 ```
 
-If the API requires JWT authentication, add the request interceptor before the response interceptor:
+Non-2xx responses reject with the parsed body, so React Query's `onError` receives it.
+
+If the API requires JWT authentication, attach the token inside `request()` before the
+fetch call:
 
 ```typescript
-axiosInstance.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
+const token = tokenStorage.get()
+const headers = {
+  'Content-Type': 'application/json',
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  ...config?.headers,
+}
 ```
+
+> Binary downloads (e.g. a zip export) call `fetch(...).then((r) => r.blob())` directly —
+> the JSON `api` client above is only for JSON endpoints.
 
 ---
 
