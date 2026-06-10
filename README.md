@@ -2,6 +2,24 @@
 
 Base repository for Claude Code-assisted development. Contains architecture guidelines and reference projects.
 
+## Creating a project from this base
+
+This repo is a **template**. Two scripts bootstrap a full-stack project (API + Web), renaming everything and keeping the temperature example as a reference. `<slug>` is kebab-case (e.g. `orders`, `product-catalog`).
+
+| Command | Use it to… | Result |
+|---|---|---|
+| `./create-project.sh <slug>` | scaffold a project **inside this repo** | `projects/<slug>-api` + `projects/<slug>-web`, local ports reassigned, deploy stubs added |
+| `./eject-project.sh <slug> <target-dir>` | export a **standalone repo** elsewhere | flat `<target>/{api,web,infra,.github,guidelines}` + `git init` and first commit on `master` |
+
+```bash
+./create-project.sh orders             # → projects/orders-api, projects/orders-web
+./eject-project.sh  orders ../orders   # → ../orders as its own git repository
+```
+
+Conventions: `CLAUDE.md`. Deployment: `guidelines/infra-devops.md`.
+
+---
+
 ## Reference project: temperature
 
 The `temperature-api` + `temperature-web` projects implement the full stack following the patterns in `guidelines/`. Run them to see the reference implementation in action.
