@@ -7,6 +7,11 @@ on release. See `VERSIONING.md` at the repository root.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-11
+### Added
+- Guided product tour (driver.js) via a reusable `useTour` hook — auto-runs once on first
+  visit and re-runnable from a "Tour" button.
+
 ## [0.3.0] - 2026-06-11
 ### Added
 - React Query cache tiers (`lib/cache.ts`) and `localStorage` persistence of the stable

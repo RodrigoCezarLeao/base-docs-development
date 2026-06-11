@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import type { DriveStep } from 'driver.js'
 import { useAuth } from '@/stores/auth/hooks'
 import { useProjects } from '@/services/projects/queries'
 import { ProjectCard, CreateProjectModal } from '@/features/projects'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
+import { useTour } from '@/hooks/useTour'
 
 export default function ProjectsPage() {
   const { t } = useTranslation()
@@ -13,6 +15,16 @@ export default function ProjectsPage() {
   const { isAuthenticated, isAdmin, logout } = useAuth()
   const { data: projects = [], isLoading } = useProjects()
   const [showModal, setShowModal] = useState(false)
+
+  const steps: DriveStep[] = [
+    { popover: { title: t('tour.welcomeTitle'), description: t('tour.welcomeDesc') } },
+    { element: '[data-tour="create"]', popover: { title: t('tour.createTitle'), description: t('tour.createDesc') } },
+    { element: '[data-tour="projects"]', popover: { title: t('tour.listTitle'), description: t('tour.listDesc') } },
+  ]
+  const { start: startTour } = useTour(steps, {
+    tourId: 'docmap-projects',
+    labels: { next: t('tour.next'), prev: t('tour.prev'), done: t('tour.done') },
+  })
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
@@ -23,21 +35,24 @@ export default function ProjectsPage() {
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">DocMap</h1>
         <div className="flex items-center gap-3">
-          <Button onClick={() => setShowModal(true)}>
-            {t('projects.create')}
-          </Button>
+          <span data-tour="create">
+            <Button onClick={() => setShowModal(true)}>
+              {t('projects.create')}
+            </Button>
+          </span>
           {isAdmin && (
             <Button variant="secondary" onClick={() => navigate('/admin/logs')}>
               {t('logs.nav')}
             </Button>
           )}
+          <Button variant="secondary" onClick={startTour}>{t('tour.start')}</Button>
           <Button variant="secondary" onClick={logout}>
             {t('common.logout')}
           </Button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-6 py-8" data-tour="projects">
         <h2 className="text-2xl font-semibold text-gray-900 mb-6">
           {t('projects.title')}
         </h2>

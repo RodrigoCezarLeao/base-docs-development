@@ -44,5 +44,19 @@
     "user": "User",
     "message": "Message",
     "empty": "No entries for these filters."
+  },
+  "tour": {
+    "start": "Tour",
+    "next": "Next",
+    "prev": "Back",
+    "done": "Done",
+    "welcomeTitle": "Welcome 👋",
+    "welcomeDesc": "A quick tour of the app.",
+    "addTitle": "Add a reading",
+    "addDesc": "Record a new temperature reading here.",
+    "filtersTitle": "Filter",
+    "filtersDesc": "Narrow the list by location.",
+    "listTitle": "Readings",
+    "listDesc": "Browse and paginate the recorded readings."
   }
 }

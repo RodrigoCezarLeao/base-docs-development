@@ -54,5 +54,17 @@
     "user": "Usuário",
     "message": "Mensagem",
     "empty": "Nenhum registro para os filtros."
+  },
+  "tour": {
+    "start": "Tour",
+    "next": "Próximo",
+    "prev": "Voltar",
+    "done": "Concluir",
+    "welcomeTitle": "Bem-vindo 👋",
+    "welcomeDesc": "Um tour rápido pelo DocMap.",
+    "createTitle": "Novo projeto",
+    "createDesc": "Crie um projeto de documentação aqui.",
+    "listTitle": "Seus projetos",
+    "listDesc": "Abra um projeto para editar o canvas."
   }
 }

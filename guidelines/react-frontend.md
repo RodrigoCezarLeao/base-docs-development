@@ -692,6 +692,27 @@ export const queryClient = new QueryClient({
 
 ---
 
+## Guided tours (driver.js)
+
+Onboard users with a step-by-step product tour. `hooks/useTour.ts` wraps
+[driver.js](https://driverjs.com): it auto-runs once per `tourId` (tracked in
+`localStorage`) and returns `start()` for a manual "Tour" button.
+
+```ts
+const steps: DriveStep[] = [
+  { popover: { title: t('tour.welcomeTitle'), description: t('tour.welcomeDesc') } }, // no element → centered
+  { element: '[data-tour="add-form"]', popover: { title: t('tour.addTitle'), description: t('tour.addDesc') } },
+]
+const { start } = useTour(steps, { tourId: 'home', labels: { next: t('tour.next'), prev: t('tour.prev'), done: t('tour.done') } })
+```
+
+- Mark targets with `data-tour="…"`. If a component/button doesn't forward arbitrary
+  attributes (e.g. a typed `Button`), wrap it in a `<div>`/`<span data-tour="…">`.
+- Tour copy lives under the `tour` i18n namespace.
+- dep: `driver.js`; the hook imports its CSS once (`import 'driver.js/dist/driver.css'`).
+
+---
+
 ## Cache tiers & persistence
 
 React Query is already an in-memory cache. For data that changes rarely, raise its
