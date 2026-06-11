@@ -7,6 +7,12 @@ on release. See `VERSIONING.md` at the repository root.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-11
+### Added
+- Settings menu (gear icon → dropdown) for theme (light / dark / system) and language,
+  synced with the URL (`?theme=&lang=`) and persisted to `localStorage`. Class-based dark
+  mode applied across the UI.
+
 ## [0.4.0] - 2026-06-11
 ### Added
 - Guided product tour (driver.js) via a reusable `useTour` hook — auto-runs once on first

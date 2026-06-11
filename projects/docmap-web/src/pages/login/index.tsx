@@ -12,9 +12,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white rounded-xl shadow-md p-8 w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 w-full max-w-sm">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">
           {t('auth.loginTitle')}
         </h1>
         <LoginForm />

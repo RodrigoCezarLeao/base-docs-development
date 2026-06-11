@@ -3,6 +3,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { Suspense } from 'react'
 import { Toaster } from 'sonner'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
+import { SettingsMenu } from './components/ui/SettingsMenu'
 import { VersionBadge } from './components/ui/VersionBadge'
 import './i18n'
 import { persistOptions } from './lib/cache'
@@ -18,6 +19,7 @@ export function App() {
         </Suspense>
       </ErrorBoundary>
       <Toaster position="bottom-right" richColors />
+      <SettingsMenu />
       <VersionBadge />
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </PersistQueryClientProvider>

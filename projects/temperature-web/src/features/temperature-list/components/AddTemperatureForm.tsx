@@ -8,7 +8,7 @@ interface AddTemperatureFormProps {
   isLoading: boolean
 }
 
-const inputClass = 'px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+const inputClass = 'px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
 
 export function AddTemperatureForm({ onSubmit, isLoading }: AddTemperatureFormProps) {
   const { t } = useTranslation()

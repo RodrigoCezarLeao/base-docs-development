@@ -39,13 +39,13 @@ export function ProjectCard({ project }: ProjectCardProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col gap-3 shadow-sm">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-3 shadow-sm">
       <div>
-        <h3 className="font-semibold text-gray-900 text-lg">{project.name}</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">{project.name}</h3>
         {project.description && (
-          <p className="text-sm text-gray-500 mt-1">{project.description}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{project.description}</p>
         )}
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
           {project.documentCount} {t('projects.documents')}
         </p>
       </div>

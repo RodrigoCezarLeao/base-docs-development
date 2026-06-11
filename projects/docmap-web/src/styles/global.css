@@ -1,8 +1,14 @@
 @import "tailwindcss";
 @import "reactflow/dist/style.css";
 
+/* Class-based dark mode: toggling `.dark` on <html> activates dark: utilities. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+  }
+  .dark {
+    color-scheme: dark;
   }
 }

@@ -31,9 +31,9 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">DocMap</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">DocMap</h1>
         <div className="flex items-center gap-3">
           <span data-tour="create">
             <Button onClick={() => setShowModal(true)}>
@@ -53,7 +53,7 @@ export default function ProjectsPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8" data-tour="projects">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
           {t('projects.title')}
         </h2>
 
@@ -64,7 +64,7 @@ export default function ProjectsPage() {
         )}
 
         {!isLoading && projects.length === 0 && (
-          <p className="text-center text-gray-500 py-12">{t('projects.empty')}</p>
+          <p className="text-center text-gray-500 dark:text-gray-400 py-12">{t('projects.empty')}</p>
         )}
 
         {!isLoading && projects.length > 0 && (

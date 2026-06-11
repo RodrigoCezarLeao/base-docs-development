@@ -58,5 +58,12 @@
     "filtersDesc": "Narrow the list by location.",
     "listTitle": "Readings",
     "listDesc": "Browse and paginate the recorded readings."
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "language": "Language",
+    "themes": { "system": "System", "light": "Light", "dark": "Dark" },
+    "languages": { "pt-BR": "Português", "en": "English" }
   }
 }

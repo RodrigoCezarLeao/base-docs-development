@@ -105,6 +105,7 @@ Use different ports to avoid conflicts when running multiple projects at the sam
 - `mockRejectedValueOnce()` (not `mockRejectedValue`) — Vitest 2.x detects the permanent variant as unhandled rejection
 - `return await` in async service functions — correct error propagation
 - Guided tours via the `useTour` hook (driver.js) — `data-tour` targets + the `tour` i18n namespace
+- Theme + language via the `SettingsMenu` (gear) — `stores/settings`, class-based dark mode, synced with URL + `localStorage`; components add `dark:` variants
 
 **Versioning (manual SemVer, per app — see `VERSIONING.md`):**
 - API version = `<Version>` in `Directory.Build.props`; surfaced at `GET /version` and `/health`

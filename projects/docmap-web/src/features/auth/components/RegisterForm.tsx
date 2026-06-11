@@ -56,7 +56,7 @@ export function RegisterForm() {
       <Button type="submit" loading={isPending} className="w-full">
         {t('auth.register')}
       </Button>
-      <p className="text-sm text-center text-gray-600">
+      <p className="text-sm text-center text-gray-600 dark:text-gray-400">
         {t('auth.hasAccount')}{' '}
         <Link to="/login" className="text-blue-600 hover:underline">
           {t('auth.login')}

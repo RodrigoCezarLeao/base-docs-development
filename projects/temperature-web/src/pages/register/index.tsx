@@ -23,15 +23,15 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-md p-8 w-full max-w-sm flex flex-col gap-4">
-        <h1 className="text-2xl font-bold text-gray-900 text-center">{t('auth.registerTitle')}</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 w-full max-w-sm flex flex-col gap-4">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center">{t('auth.registerTitle')}</h1>
         <Input label={t('auth.name')} value={name} onChange={(e) => setName(e.target.value)} required />
         <Input label={t('auth.email')} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <Input label={t('auth.password')} type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
         {isError && <p className="text-sm text-red-600">{t('common.error')}</p>}
         <Button type="submit" loading={isPending}>{t('auth.register')}</Button>
-        <p className="text-sm text-center text-gray-600">
+        <p className="text-sm text-center text-gray-600 dark:text-gray-400">
           {t('auth.hasAccount')}{' '}
           <Link to="/login" className="text-blue-600 hover:underline">{t('auth.login')}</Link>
         </p>

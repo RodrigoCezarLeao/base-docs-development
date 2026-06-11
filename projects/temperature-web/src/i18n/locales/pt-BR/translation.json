@@ -58,5 +58,12 @@
     "filtersDesc": "Refine a lista por local.",
     "listTitle": "Leituras",
     "listDesc": "Navegue e pagine as leituras registradas."
+  },
+  "settings": {
+    "title": "Configurações",
+    "theme": "Tema",
+    "language": "Idioma",
+    "themes": { "system": "Sistema", "light": "Claro", "dark": "Escuro" },
+    "languages": { "pt-BR": "Português", "en": "English" }
   }
 }

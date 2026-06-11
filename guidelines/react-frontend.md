@@ -692,6 +692,26 @@ export const queryClient = new QueryClient({
 
 ---
 
+## Theme & language settings
+
+A global gear menu (`components/ui/SettingsMenu`) lets users switch **theme**
+(light / dark / system) and **language**, synced with the URL and `localStorage`.
+
+- **Store** — `stores/settings/store.ts` (Zustand + `persist`) holds `{ theme, language }`.
+  `setTheme`/`setLanguage` apply the change, write a `?theme=`/`?lang=` URL param, and (for
+  language) call `i18n.changeLanguage`.
+- **Dark mode (class strategy)** — `lib/settings.ts#applyTheme` toggles `.dark` on `<html>`
+  (`system` follows `prefers-color-scheme`); `global.css` enables it with
+  `@custom-variant dark (&:where(.dark, .dark *));`. Components opt in with `dark:` variants.
+- **Init** — `initSettings()` runs once in `main.tsx` before render: URL params override the
+  persisted prefs, theme + language are applied (no flash), and an OS-theme listener keeps
+  `system` in sync.
+
+> New components must add `dark:` variants to their surfaces (bg/text/border) — follow the
+> shared `Button`/`Input` and the page components for the pattern.
+
+---
+
 ## Guided tours (driver.js)
 
 Onboard users with a step-by-step product tour. `hooks/useTour.ts` wraps

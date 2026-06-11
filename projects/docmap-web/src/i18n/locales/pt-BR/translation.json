@@ -66,5 +66,12 @@
     "createDesc": "Crie um projeto de documentação aqui.",
     "listTitle": "Seus projetos",
     "listDesc": "Abra um projeto para editar o canvas."
+  },
+  "settings": {
+    "title": "Configurações",
+    "theme": "Tema",
+    "language": "Idioma",
+    "themes": { "system": "Sistema", "light": "Claro", "dark": "Escuro" },
+    "languages": { "pt-BR": "Português", "en": "English" }
   }
 }

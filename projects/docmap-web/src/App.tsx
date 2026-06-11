@@ -6,6 +6,7 @@ import { queryClient } from '@/lib/queryClient'
 import '@/i18n'
 import '@/styles/global.css'
 import { Router } from '@/router'
+import { SettingsMenu } from '@/components/ui/SettingsMenu'
 import { VersionBadge } from '@/components/ui/VersionBadge'
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
       <Suspense fallback={<div>Loading...</div>}>
         <Router />
       </Suspense>
+      <SettingsMenu />
       <VersionBadge />
       {import.meta.env.DEV && <ReactQueryDevtools />}
     </PersistQueryClientProvider>

@@ -32,7 +32,7 @@ export function TemperatureList({
     ? readings.filter((r) => r.location.toLowerCase().includes(locationFilter.toLowerCase()))
     : readings
 
-  if (filtered.length === 0) return <p className="text-gray-400">{t('common.noData')}</p>
+  if (filtered.length === 0) return <p className="text-gray-400 dark:text-gray-500">{t('common.noData')}</p>
 
   return (
     <div>

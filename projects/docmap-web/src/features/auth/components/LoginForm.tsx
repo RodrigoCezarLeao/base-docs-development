@@ -45,7 +45,7 @@ export function LoginForm() {
       <Button type="submit" loading={isPending} className="w-full">
         {t('auth.login')}
       </Button>
-      <p className="text-sm text-center text-gray-600">
+      <p className="text-sm text-center text-gray-600 dark:text-gray-400">
         {t('auth.noAccount')}{' '}
         <Link to="/register" className="text-blue-600 hover:underline">
           {t('auth.register')}
