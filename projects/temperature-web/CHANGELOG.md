@@ -7,6 +7,11 @@ on release. See `VERSIONING.md` at the repository root.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-11
+### Added
+- Admin metrics dashboard (`/admin/metrics`): active users, in-flight, total requests, a
+  live per-endpoint table and a dependency-free SVG traffic chart, polling ~2s.
+
 ## [0.5.0] - 2026-06-11
 ### Added
 - Settings menu (gear icon → dropdown) for theme (light / dark / system) and language,

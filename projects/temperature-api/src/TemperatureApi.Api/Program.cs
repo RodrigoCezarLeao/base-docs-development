@@ -81,6 +81,7 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<MetricsMiddleware>(); // after auth so identity + routed endpoint are available
 app.MapControllers();
 
 // App version (manual SemVer from <Version>) + build metadata (set by CI via env).

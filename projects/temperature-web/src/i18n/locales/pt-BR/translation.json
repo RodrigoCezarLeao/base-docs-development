@@ -65,5 +65,17 @@
     "language": "Idioma",
     "themes": { "system": "Sistema", "light": "Claro", "dark": "Escuro" },
     "languages": { "pt-BR": "Português", "en": "English" }
+  },
+  "metrics": {
+    "nav": "Métricas",
+    "title": "Métricas",
+    "back": "Voltar",
+    "activeUsers": "Usuários ativos",
+    "inFlight": "Em andamento",
+    "total": "Requisições totais",
+    "traffic": "Tráfego (req/s, últimos 60s)",
+    "endpoint": "Endpoint",
+    "count": "Total",
+    "empty": "Nenhuma requisição ainda."
   }
 }

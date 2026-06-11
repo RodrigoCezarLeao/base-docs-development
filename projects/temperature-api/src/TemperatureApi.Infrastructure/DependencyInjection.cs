@@ -3,8 +3,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TemperatureApi.Application.Caching;
 using TemperatureApi.Application.Interfaces;
+using TemperatureApi.Application.Metrics;
 using TemperatureApi.Infrastructure.Caching;
 using TemperatureApi.Infrastructure.Data;
+using TemperatureApi.Infrastructure.Metrics;
 using TemperatureApi.Infrastructure.Migrations;
 using TemperatureApi.Infrastructure.Repositories;
 
@@ -27,6 +29,7 @@ public static class DependencyInjection
 
         services.AddMemoryCache();
         services.AddSingleton<ICacheService, MemoryCacheService>();
+        services.AddSingleton<IMetricsCollector, MetricsCollector>();
         services.AddScoped<ITemperatureReadingRepository, TemperatureReadingRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
 

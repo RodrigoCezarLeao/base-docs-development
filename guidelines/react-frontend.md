@@ -712,6 +712,15 @@ A global gear menu (`components/ui/SettingsMenu`) lets users switch **theme**
 
 ---
 
+## Metrics dashboard
+
+An admin page (`pages/admin-metrics`, guarded by `isAdmin`) polls `GET /api/v1/admin/metrics`
+every ~2 s (`useMetrics` with `refetchInterval: 2000`) and shows active users, in-flight, total
+requests, a live per-endpoint table, and a **dependency-free SVG** traffic chart
+(`components/ui/TrafficChart`). A "Metrics" nav button (admin-only) sits next to "Logs".
+
+---
+
 ## Guided tours (driver.js)
 
 Onboard users with a step-by-step product tour. `hooks/useTour.ts` wraps

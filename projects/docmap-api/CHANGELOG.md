@@ -7,6 +7,12 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-11
+### Added
+- In-process request metrics (`IMetricsCollector` + `MetricsMiddleware`) and an admin
+  endpoint `GET /api/v1/admin/metrics` (active users, in-flight, totals, per-endpoint
+  counts, 60s traffic series).
+
 ## [0.3.0] - 2026-06-11
 ### Added
 - In-memory cache (`ICacheService` over `IMemoryCache`): cache-aside reads with a TTL

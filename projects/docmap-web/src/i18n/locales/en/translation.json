@@ -73,5 +73,17 @@
     "language": "Language",
     "themes": { "system": "System", "light": "Light", "dark": "Dark" },
     "languages": { "pt-BR": "Português", "en": "English" }
+  },
+  "metrics": {
+    "nav": "Metrics",
+    "title": "Metrics",
+    "back": "Back",
+    "activeUsers": "Active users",
+    "inFlight": "In-flight",
+    "total": "Total requests",
+    "traffic": "Traffic (req/s, last 60s)",
+    "endpoint": "Endpoint",
+    "count": "Count",
+    "empty": "No requests yet."
   }
 }

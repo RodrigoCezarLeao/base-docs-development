@@ -106,6 +106,7 @@ Use different ports to avoid conflicts when running multiple projects at the sam
 - `return await` in async service functions — correct error propagation
 - Guided tours via the `useTour` hook (driver.js) — `data-tour` targets + the `tour` i18n namespace
 - Theme + language via the `SettingsMenu` (gear) — `stores/settings`, class-based dark mode, synced with URL + `localStorage`; components add `dark:` variants
+- Real-time metrics: in-process `IMetricsCollector` + `MetricsMiddleware` → admin `GET /api/v1/admin/metrics`; FE dashboard at `/admin/metrics` (polls ~2s, SVG chart). No Prometheus/Grafana.
 
 **Versioning (manual SemVer, per app — see `VERSIONING.md`):**
 - API version = `<Version>` in `Directory.Build.props`; surfaced at `GET /version` and `/health`

@@ -788,6 +788,26 @@ public async Task<...> UpdateAsync(int id, ...) { /* ... */ cache.Remove(CacheKe
 
 ---
 
+## Metrics (in-process, real-time)
+
+Lightweight monitoring without Prometheus/Grafana: a singleton `IMetricsCollector`
+(`Infrastructure/Metrics/MetricsCollector.cs`) is fed by `MetricsMiddleware` on every request
+and read by an admin endpoint.
+
+- The middleware records: total, in-flight (try/finally), the active identity
+  (`NameIdentifier` claim ?? IP), a per-second traffic bucket (60 s ring), and the per-endpoint
+  count keyed by the **route template** (low cardinality). It skips `/api/v1/admin/metrics`,
+  `/health`, `/ping`, `/version` so the dashboard's own polling isn't measured.
+- `GET /api/v1/admin/metrics` (`[Authorize(Roles="Admin")]`) returns a `MetricsSnapshot`
+  (active users, in-flight, total, endpoints, 60 s traffic).
+- DI: `services.AddSingleton<IMetricsCollector, MetricsCollector>();`; place
+  `app.UseMiddleware<MetricsMiddleware>()` after auth, before `MapControllers`.
+
+> In-memory, per-process (resets on restart; fits the single-replica infra). If you later need
+> history, alerting or multi-instance aggregation, graduate to Prometheus + Grafana.
+
+---
+
 ## Dependency Injection
 
 Each layer exposes a registration extension method. `Program.cs` calls only these two methods.
