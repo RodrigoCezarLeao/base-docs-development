@@ -691,6 +691,17 @@ public async Task<IActionResult> GetAll()
 }
 ```
 
+**Role-based authorization (admin)** — add an `is_admin BOOLEAN NOT NULL DEFAULT FALSE`
+column to `users`, emit a `Role` claim when the user is an admin, and protect admin-only
+endpoints with `[Authorize(Roles = "Admin")]`:
+
+```csharp
+if (user.IsAdmin)
+    claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+```
+
+Designate the first admin manually: `UPDATE users SET is_admin = TRUE WHERE email = '...';`
+
 **Passwords** — never store plain text. Use BCrypt:
 
 ```xml
@@ -704,6 +715,41 @@ string hash = BCrypt.Net.BCrypt.HashPassword(plainPassword);
 // Verification on login
 bool isValid = BCrypt.Net.BCrypt.Verify(plainPassword, storedHash);
 ```
+
+---
+
+## File logging & admin log viewer (optional)
+
+For VPS deployments the API writes **structured daily log files** that an admin can
+browse from the frontend. See `temperature-api`/`docmap-api` for the reference.
+
+**Format** — one delimited line per entry in `logs/yyyy-MM-dd.txt` (a new file per day;
+the date prefix sorts newest on top). The message is last so embedded separators are safe:
+
+```
+2026-06-10T13:00:00.123Z | INFO | Api.HTTP | <requestId> | <userId> | GET /api/v1/x -> 200 (12ms)
+```
+
+**Writing** (`Api/Logging/`):
+- `FileLoggerProvider` + `FileLogger` (an `ILoggerProvider`) capture every `ILogger`
+  entry; `requestId` = `HttpContext.TraceIdentifier`, `userId` = the `NameIdentifier`
+  claim (via `IHttpContextAccessor`).
+- `FileLogWriter` appends under a lock with `FileShare.ReadWrite`, wrapped in `try/catch`
+  so **logging never throws into the request pipeline**.
+- `RequestLoggingMiddleware` logs one line per HTTP request.
+- Wire in `Program.cs`: `AddHttpContextAccessor()`, resolve the dir from
+  `Logging:Directory` / `LOGS_DIR` env (default `<contentRoot>/logs`), then
+  `builder.Logging.AddProvider(new FileLoggerProvider(dir, new HttpContextAccessor()))`.
+
+**Reading** (`Application/Logging/`): `LogReaderService` parses, filters (date, level,
+category, userId, free-text) and paginates a day's file, newest-first. The `date` is
+**guarded to `^\d{4}-\d{2}-\d{2}$`** (no path traversal).
+
+**Endpoints** — `LogsController` with `[Authorize(Roles = "Admin")]`:
+`GET /api/v1/admin/logs/files` (available days) and `GET /api/v1/admin/logs?date&level&category&userId&q&page&pageSize`.
+
+> On the VPS, mount the logs dir as a volume so files persist and the viewer can read
+> them — see `guidelines/infra-devops.md`.
 
 ---
 

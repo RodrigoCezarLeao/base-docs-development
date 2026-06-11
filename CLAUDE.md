@@ -19,10 +19,10 @@ guidelines/
   infra-devops.md       → VPS provisioning + CI/CD: Docker, GHCR, Tailscale, nginx, HTTPS, DEV/PROD
 
 projects/
-  temperature-api/      → Reference backend — simple CRUD, no auth
-  temperature-web/      → Reference frontend — listing, form, tests
-  docmap-api/           → Showcase — JWT, multiple related resources, zip export
-  docmap-web/           → Showcase — React Flow canvas, Zustand persist, side panel editor
+  temperature-api/      → Reference backend — CRUD + JWT auth + file logging + admin log viewer
+  temperature-web/      → Reference frontend — listing, auth + router, admin log viewer
+  docmap-api/           → Showcase — JWT + is_admin, related resources, zip export, log viewer
+  docmap-web/           → Showcase — React Flow canvas, Zustand persist, admin log viewer
 
 infra/                  → Deployment templates: provision-vps.sh, compose, nginx, .env (see infra-devops.md)
 VERSIONING.md           → Versioning scheme (manual SemVer) + deploy/release plan
@@ -109,6 +109,11 @@ Use different ports to avoid conflicts when running multiple projects at the sam
 - API version = `<Version>` in `Directory.Build.props`; surfaced at `GET /version` and `/health`
 - Frontend version = `"version"` in `package.json`; shown in the bottom-left badge (`VersionBadge`)
 - Commit + build time are injected by CI (build-args / `VITE_APP_*`); each app keeps a `CHANGELOG.md`
+
+**Auth & logging (both projects implement this — see guidelines):**
+- JWT auth (register/login/me) with an `is_admin` column → `Role=Admin` claim; promote via SQL (`UPDATE users SET is_admin=TRUE WHERE …`)
+- File logging to daily `logs/yyyy-MM-dd.txt` (delimited); admin-only viewer at `GET /api/v1/admin/logs` + a frontend `/admin/logs` page
+- Logging must never throw into the request pipeline; on the VPS the logs dir is a volume
 
 ## Quick commands
 

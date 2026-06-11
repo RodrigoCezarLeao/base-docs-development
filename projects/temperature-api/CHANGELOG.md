@@ -7,6 +7,12 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-10
+### Added
+- JWT authentication (register / login / me) with a `users` table and an `is_admin` role.
+- File logging to daily `logs/yyyy-MM-dd.txt` files and admin-only log viewer endpoints
+  (`GET /api/v1/admin/logs` and `/admin/logs/files`, `[Authorize(Roles="Admin")]`).
+
 ## [0.1.0] - 2026-06-10
 ### Added
 - Initial version.

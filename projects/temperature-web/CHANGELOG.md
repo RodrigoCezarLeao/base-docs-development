@@ -7,6 +7,10 @@ on release. See `VERSIONING.md` at the repository root.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-10
+### Added
+- Authentication (login / register, JWT) with React Router, and the admin-only log viewer.
+
 ## [0.1.0] - 2026-06-10
 ### Added
 - Initial version.

@@ -7,6 +7,10 @@ on release. See `VERSIONING.md` at the repository root.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-10
+### Added
+- Admin-only log viewer (visible to `is_admin` users) with date/level/search filters.
+
 ## [0.1.0] - 2026-06-10
 ### Added
 - Initial version.

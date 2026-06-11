@@ -318,6 +318,11 @@ Two clearly separated buckets:
 - 2 GB swap (set during provisioning) absorbs spikes; `mem_limit` caps the container.
 - Capped container logs (`max-size: 10m`, `max-file: 3`) prevent log-driven disk fill.
 
+> **Application logs.** The API writes a delimited file per day to `/app/logs`, bind-mounted
+> to `/opt/apps/<project>/logs` (created by `add-project.sh`, `LOGS_DIR` in the compose file)
+> so they survive container churn and the admin log viewer (`/admin/logs`) can read them.
+> Rotate/prune them with a cron if needed — they are plain `yyyy-MM-dd.txt` files.
+
 ---
 
 ## Operations — the `app` CLI

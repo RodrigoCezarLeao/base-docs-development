@@ -692,6 +692,34 @@ export const queryClient = new QueryClient({
 
 ---
 
+## Authentication & protected routes (optional)
+
+When the API has JWT auth, the frontend follows this shape (see `temperature-web` and
+`docmap-web`):
+
+- **Token storage** — `lib/auth.ts` reads/writes the token in `localStorage`; `lib/api.ts`
+  attaches it as `Authorization: Bearer <token>` on every request.
+- **Auth store** — `stores/auth/` is a Zustand store with `persist`, holding `{ user, token }`
+  with `setAuth`/`logout`. Selectors expose `selectIsAuthenticated` and `selectIsAdmin`
+  (`user?.isAdmin === true`); `useAuth()` returns `{ user, isAuthenticated, isAdmin, logout }`.
+- **Auth service** — `services/auth/` has `useLogin`/`useRegister` (React Query mutations)
+  that call `/api/v1/auth/*` and `setAuth` on success.
+- **Routing** — `react-router-dom`; `router/index.tsx` defines the routes and `App` renders
+  `<RouterProvider>` inside a `<Suspense>` (lazy pages).
+- **Guards** — pages redirect with `<Navigate>` based on the store, e.g. a public page sends
+  unauthenticated users to `/login`; an **admin-only** page sends non-admins away:
+
+```tsx
+const { isAuthenticated, isAdmin } = useAuth()
+if (!isAuthenticated) return <Navigate to="/login" replace />
+if (!isAdmin) return <Navigate to="/" replace />
+```
+
+An admin **log viewer** page (`pages/admin-logs`) consumes the API's `/api/v1/admin/logs`
+endpoints with date/level/search filters + `Pagination`, shown via an admin-only nav link.
+
+---
+
 ## Pagination
 
 The backend returns `ApiResponse<PagedResponse<T>>` with `items`, `totalCount`, `page`, `pageSize`, `totalPages`, `hasNextPage`, and `hasPreviousPage`. The frontend uses two reusable building blocks: the `usePagination` hook for state and the `<Pagination>` component for the UI.
