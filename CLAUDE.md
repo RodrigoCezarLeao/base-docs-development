@@ -96,6 +96,7 @@ Use different ports to avoid conflicts when running multiple projects at the sam
 - Migrations as numbered `EmbeddedResource` (`001_*.sql`) — never alter an already-executed script
 - `public partial class Program {}` at the end of `Program.cs` — required for `WebApplicationFactory`
 - Integration tests replace repositories and `IMigrationRunner` with mocks — no real database in CI
+- Access tracking is **consent-gated** (`X-Tracking-Consent` → `ConsentMiddleware` → `HasTrackingConsent()`): nothing is recorded (tracking, request log, metrics, log identity) before consent. Capture is non-blocking (`Channel` + `AccessEventWriter`); erasure is a hard SQL delete. See `guidelines/csharp-api.md` → "Access tracking & LGPD"
 
 **Frontend:**
 - `"type":"module"` in `package.json` — required for `@tailwindcss/vite`
@@ -107,6 +108,7 @@ Use different ports to avoid conflicts when running multiple projects at the sam
 - Guided tours via the `useTour` hook (driver.js) — `data-tour` targets + the `tour` i18n namespace
 - Theme + language via the `SettingsMenu` (gear) — `stores/settings`, class-based dark mode, synced with URL + `localStorage`; components add `dark:` variants
 - Real-time metrics: in-process `IMetricsCollector` + `MetricsMiddleware` → admin `GET /api/v1/admin/metrics`; FE dashboard at `/admin/metrics` (polls ~2s, SVG chart). No Prometheus/Grafana.
+- LGPD: `lib/consent.ts` gates the `X-Tracking-Consent` header (sent only after explicit accept); a global `ConsentBanner`, a `/privacy` policy page (withdraw + erase data), and an admin `/admin/access` viewer. See `guidelines/react-frontend.md` → "LGPD consent banner"
 
 **Versioning (manual SemVer, per app — see `VERSIONING.md`):**
 - API version = `<Version>` in `Directory.Build.props`; surfaced at `GET /version` and `/health`

@@ -14,6 +14,6 @@
       Manual SemVer — single source of truth for this project's version.
       Bump on every release (see VERSIONING.md). Surfaced at GET /version and /health.
     -->
-    <Version>0.4.0</Version>
+    <Version>0.5.0</Version>
   </PropertyGroup>
 </Project>

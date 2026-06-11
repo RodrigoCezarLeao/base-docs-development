@@ -3,6 +3,7 @@
 // directly, with no casts in services. Non-2xx responses reject with the parsed body.
 // The JWT (when present) is attached as a Bearer token on every request.
 import { tokenStorage } from './auth'
+import { hasConsent } from './consent'
 
 const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
 
@@ -37,6 +38,8 @@ async function request<T>(method: string, url: string, data?: unknown, config?: 
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      // LGPD: only advertise consent when the user has explicitly granted it.
+      ...(hasConsent() ? { 'X-Tracking-Consent': 'granted' } : {}),
       ...config?.headers,
     },
     body: data === undefined ? undefined : JSON.stringify(data),

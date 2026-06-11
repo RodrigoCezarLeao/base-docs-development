@@ -63,6 +63,7 @@
     "title": "Settings",
     "theme": "Theme",
     "language": "Language",
+    "privacy": "Privacy",
     "themes": { "system": "System", "light": "Light", "dark": "Dark" },
     "languages": { "pt-BR": "Português", "en": "English" }
   },
@@ -77,5 +78,67 @@
     "endpoint": "Endpoint",
     "count": "Count",
     "empty": "No requests yet."
+  },
+  "consent": {
+    "message": "We use cookies and collect access data (IP, device and visited pages) to understand how the system is used. Nothing is collected before you accept.",
+    "learnMore": "Learn more",
+    "accept": "Accept",
+    "reject": "Decline"
+  },
+  "privacy": {
+    "nav": "Privacy",
+    "title": "Privacy & data protection",
+    "back": "Back",
+    "intro": "This policy describes, in line with Brazil's LGPD (Law 13.709/2018), which data we collect, why, and how you can exercise your rights.",
+    "sections": {
+      "collected": {
+        "title": "Data collected",
+        "body": "After you accept, we record access data: IP address, browser, operating system and device type, along with the routes accessed, HTTP method, response code and timestamp. Geographic location may be derived from the IP when that feature is enabled."
+      },
+      "purpose": {
+        "title": "Purpose",
+        "body": "The data is used to understand system usage, measure traffic, diagnose issues and improve the experience. We do not sell or share your data with third parties for marketing."
+      },
+      "legalBasis": {
+        "title": "Legal basis",
+        "body": "Processing is based on your consent (LGPD art. 7, I). No per-request observation is recorded before explicit acceptance; if you decline, no behavioral data is collected."
+      },
+      "retention": {
+        "title": "Retention",
+        "body": "We keep access data only as long as needed for the purposes above. You may request deletion at any time — removal is permanent, with no backup copies."
+      },
+      "rights": {
+        "title": "Your rights",
+        "body": "You may confirm the existence of processing, access, correct, withdraw consent and request deletion of your data, per LGPD arts. 9 and 18."
+      },
+      "exercise": {
+        "title": "How to exercise",
+        "body": "Authenticated users can withdraw consent and delete their own tracking data directly on this page. Other requests can be made through the system owner's contact channels."
+      }
+    },
+    "manage": {
+      "title": "Manage my data",
+      "description": "Withdraw consent (stops future collection) or permanently delete the tracking data already collected.",
+      "withdraw": "Withdraw consent",
+      "delete": "Delete my data"
+    },
+    "withdrawn": "Consent withdrawn. We will not collect new access data.",
+    "deleted_one": "{{count}} record deleted.",
+    "deleted_other": "{{count}} records deleted."
+  },
+  "access": {
+    "nav": "Access",
+    "title": "User access",
+    "back": "Back",
+    "userId": "User ID",
+    "search": "Search",
+    "searchPlaceholder": "Filter by IP, route, browser...",
+    "time": "Time",
+    "user": "User",
+    "ip": "IP",
+    "device": "Device",
+    "request": "Request",
+    "status": "Status",
+    "empty": "No access for these filters."
   }
 }

@@ -7,6 +7,19 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-11
+### Added
+- LGPD-compliant user access tracking. A consent gate (`X-Tracking-Consent` header →
+  `ConsentMiddleware`) blocks **all** per-request observation until the user accepts:
+  access tracking, the request log, per-user metrics, and the file logger's user identity
+  are all suppressed pre-consent.
+- `access_events` capture pipeline: `AccessTrackingMiddleware` parses the User-Agent
+  (UAParser) and enqueues to a `Channel`, drained by a background `AccessEventWriter` that
+  batch-inserts (no request-latency cost). Optional IP anonymization via `Tracking:AnonymizeIp`.
+- Consent audit (`consents` table) + endpoints: `POST /api/v1/me/consent` (granted / denied /
+  withdrawn), `DELETE /api/v1/me/tracking-data` (right to erasure — hard delete, no backup),
+  and admin `GET /api/v1/admin/access` + `DELETE /api/v1/admin/access/users/{userId}`.
+
 ## [0.4.0] - 2026-06-11
 ### Added
 - In-process request metrics (`IMetricsCollector` + `MetricsMiddleware`) and an admin

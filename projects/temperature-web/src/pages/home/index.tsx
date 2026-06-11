@@ -39,6 +39,9 @@ export function HomePage() {
         {isAdmin && (
           <Button variant="secondary" onClick={() => navigate('/admin/metrics')}>{t('metrics.nav')}</Button>
         )}
+        {isAdmin && (
+          <Button variant="secondary" onClick={() => navigate('/admin/access')}>{t('access.nav')}</Button>
+        )}
         {isAuthenticated ? (
           <Button variant="secondary" onClick={logout}>{t('common.logout')}</Button>
         ) : (

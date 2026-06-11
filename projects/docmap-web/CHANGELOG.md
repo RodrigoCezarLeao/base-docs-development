@@ -7,6 +7,17 @@ on release. See `VERSIONING.md` at the repository root.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-11
+### Added
+- LGPD consent UX: a global consent banner (Accept / Decline + link to the policy) shown
+  until a decision is stored. `lib/consent.ts` gates the `X-Tracking-Consent` header in
+  `api.ts` — it is sent only after explicit acceptance.
+- Privacy policy page (`/privacy`, pt-BR + en) describing data collected, purpose, legal
+  basis, retention and rights; authenticated users can withdraw consent and delete their
+  own tracking data (right to erasure) from there. A "Privacy" link in the settings menu.
+- Admin access viewer (`/admin/access`): paginated table of access events (time, user, IP,
+  device, request, status) with filters.
+
 ## [0.6.0] - 2026-06-11
 ### Added
 - Admin metrics dashboard (`/admin/metrics`): active users, in-flight, total requests, a

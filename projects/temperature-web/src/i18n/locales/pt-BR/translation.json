@@ -63,6 +63,7 @@
     "title": "Configurações",
     "theme": "Tema",
     "language": "Idioma",
+    "privacy": "Privacidade",
     "themes": { "system": "Sistema", "light": "Claro", "dark": "Escuro" },
     "languages": { "pt-BR": "Português", "en": "English" }
   },
@@ -77,5 +78,67 @@
     "endpoint": "Endpoint",
     "count": "Total",
     "empty": "Nenhuma requisição ainda."
+  },
+  "consent": {
+    "message": "Usamos cookies e coletamos dados de acesso (IP, dispositivo e páginas visitadas) para entender o uso do sistema. Nada é coletado antes do seu aceite.",
+    "learnMore": "Saiba mais",
+    "accept": "Aceitar",
+    "reject": "Recusar"
+  },
+  "privacy": {
+    "nav": "Privacidade",
+    "title": "Privacidade e proteção de dados",
+    "back": "Voltar",
+    "intro": "Esta política descreve, em conformidade com a LGPD (Lei nº 13.709/2018), quais dados coletamos, para quê, e como você pode exercer seus direitos.",
+    "sections": {
+      "collected": {
+        "title": "Dados coletados",
+        "body": "Após o seu aceite, registramos dados de acesso: endereço IP, navegador, sistema operacional e tipo de dispositivo, além das rotas acessadas, método HTTP, código de resposta e data/hora. A localização geográfica pode ser derivada do IP quando esse recurso estiver habilitado."
+      },
+      "purpose": {
+        "title": "Finalidade",
+        "body": "Os dados são usados para entender o uso do sistema, medir tráfego, diagnosticar problemas e melhorar a experiência. Não vendemos nem compartilhamos seus dados com terceiros para fins de marketing."
+      },
+      "legalBasis": {
+        "title": "Base legal",
+        "body": "O tratamento ocorre com base no seu consentimento (art. 7º, I, da LGPD). Nenhuma observação por requisição é registrada antes do aceite explícito; ao recusar, nada de comportamental é coletado."
+      },
+      "retention": {
+        "title": "Retenção",
+        "body": "Mantemos os dados de acesso apenas pelo tempo necessário às finalidades acima. Você pode solicitar a exclusão a qualquer momento — a remoção é definitiva, sem cópias de backup."
+      },
+      "rights": {
+        "title": "Seus direitos",
+        "body": "Você pode confirmar a existência de tratamento, acessar, corrigir, revogar o consentimento e solicitar a exclusão dos seus dados, conforme os arts. 9º e 18 da LGPD."
+      },
+      "exercise": {
+        "title": "Como exercer",
+        "body": "Usuários autenticados podem revogar o consentimento e excluir os próprios dados de rastreamento diretamente nesta página. Demais solicitações podem ser feitas pelos canais de contato do responsável pelo sistema."
+      }
+    },
+    "manage": {
+      "title": "Gerenciar meus dados",
+      "description": "Revogue o consentimento (interrompe coletas futuras) ou exclua definitivamente seus dados de rastreamento já coletados.",
+      "withdraw": "Revogar consentimento",
+      "delete": "Excluir meus dados"
+    },
+    "withdrawn": "Consentimento revogado. Não coletaremos novos dados de acesso.",
+    "deleted_one": "{{count}} registro excluído.",
+    "deleted_other": "{{count}} registros excluídos."
+  },
+  "access": {
+    "nav": "Acessos",
+    "title": "Acessos dos usuários",
+    "back": "Voltar",
+    "userId": "ID usuário",
+    "search": "Buscar",
+    "searchPlaceholder": "Filtrar por IP, rota, navegador...",
+    "time": "Horário",
+    "user": "Usuário",
+    "ip": "IP",
+    "device": "Dispositivo",
+    "request": "Requisição",
+    "status": "Status",
+    "empty": "Nenhum acesso para os filtros."
   }
 }

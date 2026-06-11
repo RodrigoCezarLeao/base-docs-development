@@ -6,6 +6,7 @@ import { queryClient } from '@/lib/queryClient'
 import '@/i18n'
 import '@/styles/global.css'
 import { Router } from '@/router'
+import { ConsentBanner } from '@/components/ui/ConsentBanner'
 import { SettingsMenu } from '@/components/ui/SettingsMenu'
 import { VersionBadge } from '@/components/ui/VersionBadge'
 
@@ -17,6 +18,7 @@ export default function App() {
       </Suspense>
       <SettingsMenu />
       <VersionBadge />
+      <ConsentBanner />
       {import.meta.env.DEV && <ReactQueryDevtools />}
     </PersistQueryClientProvider>
   )

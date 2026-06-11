@@ -808,6 +808,59 @@ and read by an admin endpoint.
 
 ---
 
+## Access tracking & LGPD (consent-gated)
+
+Persistent per-user access tracking (who, IP, device, which routes, when) that is **LGPD-compliant
+by construction**: nothing personal is recorded until the user gives explicit consent, and the
+user can erase their data (hard delete, no shadow copy). The reference projects implement this end
+to end (`temperature-api` 0.5.0+, `docmap-api` 0.5.0+).
+
+### The consent gate is the foundation
+
+The runtime source of truth is a request header set by the consenting frontend
+(`X-Tracking-Consent: granted`). `ConsentMiddleware` (registered **first**, right after the
+exception handler) reads it into `HttpContext.Items` and exposes
+`HttpContext.HasTrackingConsent()`. **Every observer is gated on it** — before consent there is no
+per-request observation at all:
+
+- `AccessTrackingMiddleware` — skips capture entirely.
+- `RequestLoggingMiddleware` + `MetricsMiddleware` — early-return without recording.
+- `FileLogger` (`FileLoggerProvider.cs`) — emits the `userId` field **only** when consent is
+  granted (otherwise `-`), so even technical error logs carry no identity pre-consent.
+
+The only server-side consent write before "granted" is the **proof-of-consent audit** itself
+(`POST /api/v1/me/consent`), which is legal evidence, not behavioral tracking.
+
+### Capture pipeline (non-blocking)
+
+`AccessTrackingMiddleware` (after auth, gated on consent, skipping `/health`, `/ping`, `/version`,
+`/api/v1/admin/*`, `/api/v1/me/consent`) parses the User-Agent with **UAParser** into
+browser/os/device, applies the IP-anonymize flag, and **enqueues** an `AccessEvent` to a bounded
+`Channel` (`AccessEventQueue`, `FullMode=DropWrite`). A `BackgroundService` (`AccessEventWriter`)
+drains the channel and **batch-inserts** via `AccessEventRepository` (Dapper), resolving the repo
+through `IServiceScopeFactory`. Request latency is unaffected and the path is resilient under load.
+
+- Migrations: `00X_CreateAccessEventsTable.sql` (`access_events`, with **nullable `country`/`city`**
+  reserved for a future GeoLite2) + `00X_CreateConsentsTable.sql`.
+- Config `Tracking:AnonymizeIp` (default false) → `IpAnonymizer` masks the last IPv4 octet /
+  the IPv6 /64 (`187.59.12.34` → `187.59.12.0`). Covered by a unit test.
+- DI: `IpAnonymizer` + `AccessEventQueue` as singletons, `IAccessTracker` → the queue,
+  `AddHostedService<AccessEventWriter>()`, scoped repositories; add `UAParser` to the API project
+  and `Microsoft.Extensions.Hosting.Abstractions` to Infrastructure.
+
+### Right to erasure & admin viewer
+
+- `DELETE /api/v1/me/tracking-data` (`[Authorize]`) — **hard-deletes** the caller's `access_events`
+  (real SQL `DELETE`, no soft-delete / no backup). The minimal `consents` audit is kept.
+- `POST /api/v1/me/consent` records `granted | denied | withdrawn` (withdraw stops future capture).
+- `GET /api/v1/admin/access?userId&from&to&q&page&pageSize` + `DELETE
+  /api/v1/admin/access/users/{userId}` (`[Authorize(Roles="Admin")]`).
+
+> Integration tests mock `IAccessEventRepository` + `IConsentRepository` in the `ApiFactory`, the
+> same way the other repositories are mocked (no real database in CI).
+
+---
+
 ## Dependency Injection
 
 Each layer exposes a registration extension method. `Program.cs` calls only these two methods.

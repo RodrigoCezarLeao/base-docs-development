@@ -1,6 +1,7 @@
 using DocMap.Infrastructure.Data;
 using DocMap.Infrastructure.Migrations;
 using DocMap.Application.Interfaces;
+using DocMap.Application.Tracking;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -16,6 +17,8 @@ public class ApiFactory : WebApplicationFactory<Program>
     public IProjectRepository ProjectRepositoryMock { get; } = Substitute.For<IProjectRepository>();
     public IDocumentRepository DocumentRepositoryMock { get; } = Substitute.For<IDocumentRepository>();
     public IDocumentConnectionRepository ConnectionRepositoryMock { get; } = Substitute.For<IDocumentConnectionRepository>();
+    public IAccessEventRepository AccessEventRepositoryMock { get; } = Substitute.For<IAccessEventRepository>();
+    public IConsentRepository ConsentRepositoryMock { get; } = Substitute.For<IConsentRepository>();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -37,12 +40,16 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<IProjectRepository>();
             services.RemoveAll<IDocumentRepository>();
             services.RemoveAll<IDocumentConnectionRepository>();
+            services.RemoveAll<IAccessEventRepository>();
+            services.RemoveAll<IConsentRepository>();
             services.RemoveAll<IMigrationRunner>();
 
             services.AddSingleton(UserRepositoryMock);
             services.AddSingleton(ProjectRepositoryMock);
             services.AddSingleton(DocumentRepositoryMock);
             services.AddSingleton(ConnectionRepositoryMock);
+            services.AddSingleton(AccessEventRepositoryMock);
+            services.AddSingleton(ConsentRepositoryMock);
             services.AddSingleton<IMigrationRunner, NoOpMigrationRunner>();
         });
     }

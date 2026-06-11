@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/cn'
 import { LANGUAGES, THEMES } from '@/lib/settings'
 import { useSettings } from '@/stores/settings/store'
@@ -7,6 +8,7 @@ import { useSettings } from '@/stores/settings/store'
 /** Gear button → dropdown with general settings (theme + language). Rendered globally. */
 export function SettingsMenu() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { theme, language, setTheme, setLanguage } = useSettings()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -58,6 +60,15 @@ export function SettingsMenu() {
                 {t(`settings.languages.${lg}`)}
               </button>
             ))}
+          </div>
+          <div className="mt-3 border-t border-gray-100 pt-2 dark:border-gray-700">
+            <button
+              type="button"
+              className="w-full rounded px-2 py-1 text-left text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+              onClick={() => { setOpen(false); navigate('/privacy') }}
+            >
+              {t('settings.privacy')}
+            </button>
           </div>
         </div>
       )}

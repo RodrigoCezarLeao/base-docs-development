@@ -9,6 +9,13 @@ public sealed class RequestLoggingMiddleware(RequestDelegate next, ILoggerFactor
 
     public async Task InvokeAsync(HttpContext context)
     {
+        // LGPD: don't record access logs until the user has consented.
+        if (!context.HasTrackingConsent())
+        {
+            await next(context);
+            return;
+        }
+
         var stopwatch = Stopwatch.StartNew();
         try
         {

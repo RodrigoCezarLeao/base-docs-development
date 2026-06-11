@@ -7,6 +7,7 @@ using NSubstitute;
 using TemperatureApi.Infrastructure.Data;
 using TemperatureApi.Infrastructure.Migrations;
 using TemperatureApi.Application.Interfaces;
+using TemperatureApi.Application.Tracking;
 
 namespace TemperatureApi.Tests.Integration;
 
@@ -35,10 +36,14 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<IDbConnectionFactory>();
             services.RemoveAll<ITemperatureReadingRepository>();
             services.RemoveAll<IUserRepository>();
+            services.RemoveAll<IAccessEventRepository>();
+            services.RemoveAll<IConsentRepository>();
             services.RemoveAll<IMigrationRunner>();
 
             services.AddSingleton(RepositoryMock);
             services.AddSingleton(UserRepositoryMock);
+            services.AddSingleton(Substitute.For<IAccessEventRepository>());
+            services.AddSingleton(Substitute.For<IConsentRepository>());
             services.AddSingleton<IMigrationRunner, NoOpMigrationRunner>();
         });
     }

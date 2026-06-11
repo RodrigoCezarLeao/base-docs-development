@@ -2,6 +2,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { Suspense } from 'react'
 import { Toaster } from 'sonner'
+import { ConsentBanner } from './components/ui/ConsentBanner'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { SettingsMenu } from './components/ui/SettingsMenu'
 import { VersionBadge } from './components/ui/VersionBadge'
@@ -21,6 +22,7 @@ export function App() {
       <Toaster position="bottom-right" richColors />
       <SettingsMenu />
       <VersionBadge />
+      <ConsentBanner />
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </PersistQueryClientProvider>
   )

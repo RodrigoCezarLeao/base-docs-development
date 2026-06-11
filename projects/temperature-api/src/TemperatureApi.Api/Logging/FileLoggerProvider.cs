@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using TemperatureApi.Api.Middleware;
 
 namespace TemperatureApi.Api.Logging;
 
@@ -29,7 +30,10 @@ internal sealed class FileLogger(string category, FileLogWriter writer, IHttpCon
 
         var ctx = http.HttpContext;
         var requestId = ctx?.TraceIdentifier ?? "-";
-        var userId = ctx?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "-";
+        // Never attach a user identity unless the user consented to tracking (LGPD).
+        var userId = ctx is not null && ctx.HasTrackingConsent()
+            ? ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "-"
+            : "-";
 
         var message = formatter(state, exception);
         if (exception is not null)

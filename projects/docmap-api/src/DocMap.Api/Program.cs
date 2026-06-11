@@ -59,11 +59,13 @@ app.Services.GetRequiredService<IMigrationRunner>().Run();
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<ConsentMiddleware>(); // reads X-Tracking-Consent; gates all observers (LGPD)
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<MetricsMiddleware>(); // after auth so identity + routed endpoint are available
+app.UseMiddleware<AccessTrackingMiddleware>(); // consent-gated user access tracking (LGPD)
 app.MapControllers();
 
 // App version (manual SemVer from <Version>) + build metadata (set by CI via env).

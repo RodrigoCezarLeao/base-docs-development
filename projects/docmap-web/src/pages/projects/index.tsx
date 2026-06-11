@@ -50,6 +50,11 @@ export default function ProjectsPage() {
               {t('metrics.nav')}
             </Button>
           )}
+          {isAdmin && (
+            <Button variant="secondary" onClick={() => navigate('/admin/access')}>
+              {t('access.nav')}
+            </Button>
+          )}
           <Button variant="secondary" onClick={startTour}>{t('tour.start')}</Button>
           <Button variant="secondary" onClick={logout}>
             {t('common.logout')}

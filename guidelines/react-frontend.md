@@ -721,6 +721,30 @@ requests, a live per-endpoint table, and a **dependency-free SVG** traffic chart
 
 ---
 
+## LGPD consent banner, privacy page & access viewer
+
+Real LGPD compliance for the access-tracking backend: nothing is sent that could trigger capture
+until the user explicitly consents, plus a privacy policy and the right to erase one's data.
+
+- **Consent gate (`lib/consent.ts`)** — stores the decision (`granted | denied | null`) in
+  `localStorage`. `lib/api.ts` attaches `X-Tracking-Consent: granted` **only** when `hasConsent()`
+  is true, so a fresh/declined visitor never advertises consent on any request.
+- **`ConsentBanner`** — rendered globally in `App.tsx` (like `SettingsMenu`), shown while the
+  decision is `null`: **Accept / Decline** + a link to the policy. Accepting records the decision
+  locally and `POST /api/v1/me/consent`; declining stores `denied` and the header is never sent.
+- **Privacy page (`pages/privacy`, `/privacy`)** — the policy text (data collected, purpose, legal
+  basis, retention, rights, how to exercise) in the `privacy` i18n namespace (pt-BR + en). For
+  authenticated users it also hosts **withdraw consent** and **delete my tracking data**
+  (`DELETE /api/v1/me/tracking-data`). A "Privacy" link lives in the settings menu.
+- **Admin access viewer (`pages/admin-access`, `/admin/access`)** — admin-guarded, dark-aware
+  table (time, user, IP, browser/os/device, method/path/status) with filters + pagination,
+  mirroring `pages/admin-logs`. An "Access" nav button (admin-only) sits next to "Metrics".
+
+> `services/consent` holds the consent/erasure mutations; `services/access` the admin query. The
+> banner uses local state seeded from `consentStorage` so it hides immediately after a decision.
+
+---
+
 ## Guided tours (driver.js)
 
 Onboard users with a step-by-step product tour. `hooks/useTour.ts` wraps

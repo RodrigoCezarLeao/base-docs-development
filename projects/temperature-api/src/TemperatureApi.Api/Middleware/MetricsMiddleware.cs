@@ -13,7 +13,8 @@ public sealed class MetricsMiddleware(RequestDelegate next)
     public async Task InvokeAsync(HttpContext context, IMetricsCollector metrics)
     {
         var path = context.Request.Path.Value ?? string.Empty;
-        if (Ignored.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
+        // LGPD: only count consented traffic; also skip the probe/self endpoints.
+        if (!context.HasTrackingConsent() || Ignored.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
         {
             await next(context);
             return;
