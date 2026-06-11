@@ -115,6 +115,10 @@ Use different ports to avoid conflicts when running multiple projects at the sam
 - File logging to daily `logs/yyyy-MM-dd.txt` (delimited); admin-only viewer at `GET /api/v1/admin/logs` + a frontend `/admin/logs` page
 - Logging must never throw into the request pipeline; on the VPS the logs dir is a volume
 
+**Caching (rarely-changing data — see guidelines):**
+- BE: `ICacheService` over `IMemoryCache` — cache-aside in services + `Remove`/`RemoveByPrefix` on writes (keys in `CacheKeys`)
+- FE: `cacheTiers` (`lib/cache.ts`); spread `...cacheTiers.stable` for stable reads, persisted to `localStorage` (busted by app version)
+
 ## Quick commands
 
 ```bash

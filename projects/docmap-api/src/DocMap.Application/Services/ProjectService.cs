@@ -1,3 +1,4 @@
+using DocMap.Application.Caching;
 using DocMap.Application.DTOs;
 using DocMap.Application.Interfaces;
 using DocMap.Application.Requests;
@@ -6,7 +7,7 @@ using DocMap.Domain.Models;
 
 namespace DocMap.Application.Services;
 
-public class ProjectService(IProjectRepository projectRepository) : IProjectService
+public class ProjectService(IProjectRepository projectRepository, ICacheService cache) : IProjectService
 {
     public async Task<ApiResponse<IEnumerable<ProjectDto>>> GetAllAsync(int userId, CancellationToken cancellationToken = default)
     {
@@ -22,7 +23,13 @@ public class ProjectService(IProjectRepository projectRepository) : IProjectServ
 
     public async Task<ApiResponse<ProjectDto>> GetByIdAsync(int id, int userId, CancellationToken cancellationToken = default)
     {
-        var project = await projectRepository.GetByIdAsync(id, cancellationToken);
+        // Cache-aside on the project entity (name/description rarely change); the document
+        // count is always read fresh. Invalidated on update/delete.
+        var project = await cache.GetOrCreateAsync(
+            CacheKeys.Project(id),
+            () => projectRepository.GetByIdAsync(id, cancellationToken),
+            cancellationToken: cancellationToken);
+
         if (project is null || project.UserId != userId)
             return ApiResponse<ProjectDto>.Fail($"Project with id {id} not found.");
 
@@ -58,6 +65,7 @@ public class ProjectService(IProjectRepository projectRepository) : IProjectServ
         project.UpdatedAt = DateTime.UtcNow;
 
         await projectRepository.UpdateAsync(project, cancellationToken);
+        cache.Remove(CacheKeys.Project(id));
 
         var count = await projectRepository.GetDocumentCountAsync(id, cancellationToken);
         return ApiResponse<ProjectDto>.Ok(MapToDto(project, count));
@@ -70,6 +78,7 @@ public class ProjectService(IProjectRepository projectRepository) : IProjectServ
             return ApiResponse<bool>.Fail($"Project with id {id} not found.");
 
         await projectRepository.DeleteAsync(id, cancellationToken);
+        cache.Remove(CacheKeys.Project(id));
         return ApiResponse<bool>.Ok(true);
     }
 

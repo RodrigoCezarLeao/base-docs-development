@@ -1,10 +1,12 @@
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ReturnsExtensions;
+using TemperatureApi.Application.Caching;
 using TemperatureApi.Application.Interfaces;
 using TemperatureApi.Application.Requests;
 using TemperatureApi.Application.Services;
 using TemperatureApi.Domain.Models;
+using TemperatureApi.Tests.Fakes;
 using Xunit;
 
 namespace TemperatureApi.Tests.Unit.Services;
@@ -18,7 +20,7 @@ public class TemperatureReadingServiceTests
 
     public TemperatureReadingServiceTests()
     {
-        _sut = new TemperatureReadingService(_repository);
+        _sut = new TemperatureReadingService(_repository, new PassThroughCache());
     }
 
     // ── GetById ──────────────────────────────────────────────────────────────

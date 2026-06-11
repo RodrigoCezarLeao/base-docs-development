@@ -7,6 +7,11 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-11
+### Added
+- In-memory cache (`ICacheService` over `IMemoryCache`): cache-aside reads with a TTL
+  backstop and explicit invalidation on writes (demonstrated on `GET .../projects/{id}`).
+
 ## [0.2.0] - 2026-06-10
 ### Added
 - `is_admin` role on users (surfaced as a `Role=Admin` JWT claim).

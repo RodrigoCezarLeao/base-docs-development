@@ -692,6 +692,37 @@ export const queryClient = new QueryClient({
 
 ---
 
+## Cache tiers & persistence
+
+React Query is already an in-memory cache. For data that changes rarely, raise its
+`staleTime`/`gcTime` and persist it across reloads. Use named tiers from `lib/cache.ts`:
+
+```ts
+export const cacheTiers = {
+  stable:   { staleTime: 1000*60*60, gcTime: 1000*60*60*24, meta: { persist: true } }, // rarely changes
+  standard: { staleTime: 1000*60*5,  gcTime: 1000*60*30 },
+  dynamic:  { staleTime: 0,          gcTime: 1000*60 },
+}
+```
+
+Spread the tier into a query (the default `queryClient` config is the "standard" baseline):
+
+```ts
+useQuery({ ...cacheTiers.stable, queryKey, queryFn })
+```
+
+**Persistence** — survive reload/reopen via `localStorage` (only the stable tier):
+- deps: `@tanstack/react-query-persist-client`, `@tanstack/query-sync-storage-persister`.
+- `App` wraps the tree in `<PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>`.
+- `persistOptions` (in `lib/cache.ts`): a `createSyncStoragePersister({ storage: localStorage })`,
+  `maxAge` = the stable `gcTime`, `buster: __APP_VERSION__` (a new deploy discards old cache),
+  and `dehydrateOptions.shouldDehydrateQuery` = only successful queries with `meta.persist === true`.
+
+> Mirror it with the backend cache: cache the same read on both ends (e.g. `GET /x/{id}`),
+> and invalidate on mutation (`queryClient.invalidateQueries` / the BE `cache.Remove`).
+
+---
+
 ## Authentication & protected routes (optional)
 
 When the API has JWT auth, the frontend follows this shape (see `temperature-web` and

@@ -7,6 +7,11 @@ on release. See `VERSIONING.md` at the repository root.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-11
+### Added
+- React Query cache tiers (`lib/cache.ts`) and `localStorage` persistence of the stable
+  tier via `PersistQueryClientProvider` (busted by the app version).
+
 ## [0.2.0] - 2026-06-10
 ### Added
 - Authentication (login / register, JWT) with React Router, and the admin-only log viewer.

@@ -1,3 +1,4 @@
+using TemperatureApi.Application.Caching;
 using TemperatureApi.Application.DTOs;
 using TemperatureApi.Application.Interfaces;
 using TemperatureApi.Application.Requests;
@@ -6,11 +7,16 @@ using TemperatureApi.Domain.Models;
 
 namespace TemperatureApi.Application.Services;
 
-public class TemperatureReadingService(ITemperatureReadingRepository repository) : ITemperatureReadingService
+public class TemperatureReadingService(ITemperatureReadingRepository repository, ICacheService cache) : ITemperatureReadingService
 {
     public async Task<ApiResponse<TemperatureReadingDto>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var reading = await repository.GetByIdAsync(id, cancellationToken);
+        // Cache-aside: a reading rarely changes once recorded. Invalidated on update/delete.
+        var reading = await cache.GetOrCreateAsync(
+            CacheKeys.Reading(id),
+            () => repository.GetByIdAsync(id, cancellationToken),
+            cancellationToken: cancellationToken);
+
         if (reading is null)
             return ApiResponse<TemperatureReadingDto>.Fail($"Temperature reading with id {id} not found.");
 
@@ -54,6 +60,7 @@ public class TemperatureReadingService(ITemperatureReadingRepository repository)
         existing.IsActive = request.IsActive;
 
         await repository.UpdateAsync(existing, cancellationToken);
+        cache.Remove(CacheKeys.Reading(id));
         return ApiResponse<TemperatureReadingDto>.Ok(MapToDto(existing), "Temperature reading updated successfully.");
     }
 
@@ -64,6 +71,7 @@ public class TemperatureReadingService(ITemperatureReadingRepository repository)
             return ApiResponse<bool>.Fail($"Temperature reading with id {id} not found.");
 
         await repository.DeleteAsync(id, cancellationToken);
+        cache.Remove(CacheKeys.Reading(id));
         return ApiResponse<bool>.Ok(true, "Temperature reading deleted successfully.");
     }
 

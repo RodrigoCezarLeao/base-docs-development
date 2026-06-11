@@ -1,8 +1,10 @@
 using Dapper;
+using DocMap.Application.Caching;
+using DocMap.Application.Interfaces;
+using DocMap.Infrastructure.Caching;
 using DocMap.Infrastructure.Data;
 using DocMap.Infrastructure.Migrations;
 using DocMap.Infrastructure.Repositories;
-using DocMap.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,6 +24,10 @@ public static class DependencyInjection
 
         services.AddSingleton<IDbConnectionFactory>(_ => new DbConnectionFactory(connectionString));
         services.AddSingleton<IMigrationRunner>(_ => new DbUpMigrationRunner(connectionString));
+
+        services.AddMemoryCache();
+        services.AddSingleton<ICacheService, MemoryCacheService>();
+
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();

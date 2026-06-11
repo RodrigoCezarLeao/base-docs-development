@@ -753,6 +753,41 @@ category, userId, free-text) and paginates a day's file, newest-first. The `date
 
 ---
 
+## Caching (IMemoryCache) — for rarely-changing reads
+
+For values that change rarely (reference/lookup data, historical records), cache them
+in-process so they aren't re-read from PostgreSQL on every request. Use **cache-aside**
+with a TTL backstop and **invalidate on writes**.
+
+- `Application/Caching/ICacheService.cs` — `GetOrCreateAsync<T>(key, factory, ttl?)`,
+  `Remove(key)`, `RemoveByPrefix(prefix)`. Keys live in a `CacheKeys` static.
+- `Infrastructure/Caching/MemoryCacheService.cs` — implements it over `IMemoryCache`
+  (default TTL ~10 min; tracks live keys so `RemoveByPrefix` works).
+- DI (`Infrastructure/DependencyInjection.cs`): `services.AddMemoryCache();` +
+  `services.AddSingleton<ICacheService, MemoryCacheService>();` (csproj:
+  `Microsoft.Extensions.Caching.Memory`).
+
+In the **service** (not the repository — keep repos pure SQL):
+
+```csharp
+public async Task<ApiResponse<Dto>> GetByIdAsync(int id, CancellationToken ct = default)
+{
+    var entity = await cache.GetOrCreateAsync(CacheKeys.Thing(id),
+        () => repository.GetByIdAsync(id, ct), cancellationToken: ct);
+    // ...
+}
+
+// On every write, drop the affected key:
+public async Task<...> UpdateAsync(int id, ...) { /* ... */ cache.Remove(CacheKeys.Thing(id)); }
+```
+
+> Fits the single-replica-per-project infra. For multi-instance you'd swap the
+> implementation for a distributed cache (e.g. Redis) behind the same `ICacheService`.
+> Don't cache fast-changing data; cache the stable part and read volatile bits fresh
+> (e.g. cache the project entity, read its document count live).
+
+---
+
 ## Dependency Injection
 
 Each layer exposes a registration extension method. `Program.cs` calls only these two methods.

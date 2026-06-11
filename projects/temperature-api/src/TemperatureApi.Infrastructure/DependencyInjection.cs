@@ -1,10 +1,12 @@
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TemperatureApi.Application.Caching;
+using TemperatureApi.Application.Interfaces;
+using TemperatureApi.Infrastructure.Caching;
 using TemperatureApi.Infrastructure.Data;
 using TemperatureApi.Infrastructure.Migrations;
 using TemperatureApi.Infrastructure.Repositories;
-using TemperatureApi.Application.Interfaces;
 
 namespace TemperatureApi.Infrastructure;
 
@@ -22,6 +24,9 @@ public static class DependencyInjection
 
         services.AddSingleton<IDbConnectionFactory>(_ => new DbConnectionFactory(connectionString));
         services.AddSingleton<IMigrationRunner>(_ => new DbUpMigrationRunner(connectionString));
+
+        services.AddMemoryCache();
+        services.AddSingleton<ICacheService, MemoryCacheService>();
         services.AddScoped<ITemperatureReadingRepository, TemperatureReadingRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
 
